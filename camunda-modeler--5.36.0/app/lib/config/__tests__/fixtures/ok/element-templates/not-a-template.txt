@@ -1,4 +1,0 @@
-{
-  "id": "no-template",
-  "FOO": "BAR"
-}
