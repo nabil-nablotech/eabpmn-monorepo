@@ -34,7 +34,7 @@ docker-compose up -d
 ## Accessing the Services
 
 ### Keycloak
-- **URL:** [http://localhost:8080](http://localhost:8080)
+- **URL:** [http://localhost:8083](http://localhost:8083)
 - **Admin Console:** Click on "Administration Console"
 - **Username:** `admin` (or as defined in `.env`)
 - **Password:** `admin` (or as defined in `.env`)
