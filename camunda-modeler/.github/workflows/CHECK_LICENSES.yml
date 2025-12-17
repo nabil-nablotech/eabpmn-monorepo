@@ -1,0 +1,61 @@
+name: CHECK_LICENSES
+
+on:
+  push:
+    branches:
+    - main
+    - develop
+    tags:
+    - '*'
+  pull_request:
+    types:
+    - opened
+    - synchronize
+
+jobs:
+  analyze:
+    name: Analyze dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v5
+    # Import FOSSA_API_KEY from Vault
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/desktop-modeler/ci/fossa FOSSA_API_KEY;
+    - name: Setup fossa-cli
+      uses: camunda/infra-global-github-actions/fossa/setup@32cf1f42a2b0a71c9e9b5d04897907bc28d77e7a
+    - name: Get context info
+      id: info
+      uses: camunda/infra-global-github-actions/fossa/info@32cf1f42a2b0a71c9e9b5d04897907bc28d77e7a
+    - name: Analyze project
+      uses: camunda/infra-global-github-actions/fossa/analyze@32cf1f42a2b0a71c9e9b5d04897907bc28d77e7a
+      with:
+        api-key: ${{ steps.secrets.outputs.FOSSA_API_KEY }}
+        branch: ${{  steps.info.outputs.head-ref }}
+        revision-id: ${{ steps.info.outputs.head-revision }}
+    # PR-only: Check for newly introduced license issues
+    # This step only fails if the PR introduces new license violations.
+    # It does not fail for pre-existing issues already present in the base branch.
+    - name: Check Pull Request for new License Issues
+      if: steps.info.outputs.is-pull-request == 'true'
+      uses: camunda/infra-global-github-actions/fossa/pr-check@32cf1f42a2b0a71c9e9b5d04897907bc28d77e7a
+      with:
+        api-key: ${{ steps.secrets.outputs.FOSSA_API_KEY }}
+        base-ref: ${{ steps.info.outputs.base-ref }}
+        # Use the most recent base commit with a FOSSA scan for comparison.
+        # If none is found, fall back to the original base commit — this will cause the check to fail.
+        base-revision: >-
+          ${{
+            steps.info.outputs.base-revision-most-recent-with-scanning-results || 
+            steps.info.outputs.base-revision
+          }}
+        revision: ${{ steps.info.outputs.head-revision }}

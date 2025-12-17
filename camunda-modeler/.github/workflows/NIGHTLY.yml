@@ -1,0 +1,162 @@
+name: NIGHTLY
+on:
+  schedule:
+    - cron: '0 18 * * *'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_nightly:
+    name: Build nightly
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-latest
+          files:
+          - 'dist/camunda-modeler-nightly-linux-x64.tar.gz'
+        - os: macos-latest
+          files:
+          - 'dist/camunda-modeler-nightly-mac-arm64.dmg'
+          - 'dist/camunda-modeler-nightly-mac-arm64.zip'
+          - 'dist/camunda-modeler-nightly-mac-x64.dmg'
+          - 'dist/camunda-modeler-nightly-mac-x64.zip'
+        - os: windows-2022
+          files:
+          - 'dist/camunda-modeler-nightly-win-ia32.zip'
+          - 'dist/camunda-modeler-nightly-win-x64.zip'
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+    - name: Use Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_AUTH_TOKEN;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_DSN;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_ORG;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_PROJECT;
+          secret/data/common/jenkins/downloads-camunda-cloud_google_sa_key DOWNLOAD_CENTER_GCLOUD_KEY_BYTES | GCP_CREDENTIALS_NAME;
+
+    - name: Import Secrets (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      id: windowsSecrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/rpa/ci/azure             CERT_PROFILE_NAME  | AZURE_CERT_PROFILE_NAME ;
+          secret/data/products/rpa/ci/azure             CLIENT_ID          | AZURE_CLIENT_ID ;
+          secret/data/products/rpa/ci/azure             CLIENT_SECRET      | AZURE_CLIENT_SECRET ;
+          secret/data/products/rpa/ci/azure             CODE_SIGNING_NAME  | AZURE_CODE_SIGNING_NAME ;
+          secret/data/products/rpa/ci/azure             SIGNING_ENDPOINT   | AZURE_ENDPOINT ;
+          secret/data/products/rpa/ci/azure             TENANT_ID          | AZURE_TENANT_ID ;
+          secret/data/products/desktop-modeler/ci/azure PUBLISHER_NAME     | AZURE_PUBLISHER_NAME ;
+
+    - name: Build nightly (Linux)
+      if: ${{ runner.os == 'Linux' }}
+      env:
+        CSC_LINK: "${{ secrets.CSC_LINK }}"
+        CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "int"
+        NIGHTLY: 1
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+      run: npm run build -- --linux
+
+    - name: Build nightly (MacOS)
+      if: ${{ runner.os == 'macOS' }}
+      env:
+        APPLE_DEVELOPER_ID: "${{ secrets.APPLE_DEVELOPER_ID }}"
+        APPLE_DEVELOPER_ID_PASSWORD: "${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}"
+        APPLE_TEAM_ID: "${{ secrets.APPLE_TEAM_ID }}"
+        CSC_LINK: "${{ secrets.CSC_LINK }}"
+        CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "int"
+        NIGHTLY: 1
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+      run: npm run build -- --mac
+
+    - name: Build nightly (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      env:
+        AZURE_CERT_PROFILE_NAME: "${{ steps.windowsSecrets.outputs.AZURE_CERT_PROFILE_NAME }}"
+        AZURE_CLIENT_ID: "${{ steps.windowsSecrets.outputs.AZURE_CLIENT_ID }}"
+        AZURE_CLIENT_SECRET: "${{ steps.windowsSecrets.outputs.AZURE_CLIENT_SECRET }}"
+        AZURE_CODE_SIGNING_NAME: "${{ steps.windowsSecrets.outputs.AZURE_CODE_SIGNING_NAME }}"
+        AZURE_ENDPOINT: "${{ steps.windowsSecrets.outputs.AZURE_ENDPOINT }}"
+        AZURE_PUBLISHER_NAME: "${{ steps.windowsSecrets.outputs.AZURE_PUBLISHER_NAME }}"
+        AZURE_TENANT_ID: "${{ steps.windowsSecrets.outputs.AZURE_TENANT_ID }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "int"
+        NIGHTLY: 1
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+      run: npm run build -- --win
+
+    - name: Upload artifact to Camunda Download Center
+      uses: camunda/infra-global-github-actions/download-center-upload@32cf1f42a2b0a71c9e9b5d04897907bc28d77e7a
+      with:
+        gcp_credentials: ${{ steps.secrets.outputs.GCP_CREDENTIALS_NAME }}
+        env: 'prod'
+        artifact_subpath: 'nightly'
+        artifact_file: "${{ join(matrix.files, ' ') }}"
+
+  post_failure:
+    name: Notify failure
+    needs: build_nightly
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/desktop-modeler/ci/slack_integration SLACK_CHANNEL_ID;
+          secret/data/products/desktop-modeler/ci/slack_integration SLACK_BOT_TOKEN;
+    - name: Post to a Slack channel
+      uses: slackapi/slack-github-action@v2
+      with:
+        method: chat.postMessage
+        token: ${{ steps.secrets.outputs.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ steps.secrets.outputs.SLACK_CHANNEL_ID }}
+          text: "Nightly build failed. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Go to the build.>"

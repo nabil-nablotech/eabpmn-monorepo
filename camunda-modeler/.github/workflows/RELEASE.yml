@@ -1,0 +1,223 @@
+name: RELEASE
+on:
+  push:
+    tags:
+      - 'v*'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pre_release:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.TAG }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+    - name: Get tag
+      id: tag
+      run: |
+        echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+    - name: Create GitHub release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ steps.tag.outputs.TAG }} --draft --title ${{ steps.tag.outputs.TAG }}
+
+  build_release:
+    name: Build release
+    needs: pre_release
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-2022 ]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    # Required to upload release artifacts to GitHub
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+    - name: Use Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_AUTH_TOKEN;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_DSN;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_ORG;
+          secret/data/products/desktop-modeler/ci/sentry SENTRY_PROJECT;
+
+    - name: Import Secrets (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      id: windowsSecrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/rpa/ci/azure             CERT_PROFILE_NAME  | AZURE_CERT_PROFILE_NAME ;
+          secret/data/products/rpa/ci/azure             CLIENT_ID          | AZURE_CLIENT_ID ;
+          secret/data/products/rpa/ci/azure             CLIENT_SECRET      | AZURE_CLIENT_SECRET ;
+          secret/data/products/rpa/ci/azure             CODE_SIGNING_NAME  | AZURE_CODE_SIGNING_NAME ;
+          secret/data/products/rpa/ci/azure             SIGNING_ENDPOINT   | AZURE_ENDPOINT ;
+          secret/data/products/rpa/ci/azure             TENANT_ID          | AZURE_TENANT_ID ;
+          secret/data/products/desktop-modeler/ci/azure PUBLISHER_NAME     | AZURE_PUBLISHER_NAME ;
+
+    - name: Build release (Linux)
+      if: ${{ runner.OS == 'Linux' }}
+      env:
+        CSC_LINK: "${{ secrets.CSC_LINK }}"
+        CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "prod"
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+        GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        NODE_ENV: "production"
+      run: npm run build -- --linux --publish
+    - name: Build release (MacOS)
+      if: ${{ runner.os == 'macOS' }}
+      env:
+        APPLE_DEVELOPER_ID: "${{ secrets.APPLE_DEVELOPER_ID }}"
+        APPLE_DEVELOPER_ID_PASSWORD: "${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}"
+        APPLE_TEAM_ID: "${{ secrets.APPLE_TEAM_ID }}"
+        CSC_LINK: "${{ secrets.CSC_LINK }}"
+        CSC_KEY_PASSWORD: "${{ secrets.CSC_KEY_PASSWORD }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "prod"
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+        GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        NODE_ENV: "production"
+      run: npm run build -- --mac --publish
+    - name: Build release (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      env:
+        AZURE_CERT_PROFILE_NAME: "${{ steps.windowsSecrets.outputs.AZURE_CERT_PROFILE_NAME }}"
+        AZURE_CLIENT_ID: "${{ steps.windowsSecrets.outputs.AZURE_CLIENT_ID }}"
+        AZURE_CLIENT_SECRET: "${{ steps.windowsSecrets.outputs.AZURE_CLIENT_SECRET }}"
+        AZURE_CODE_SIGNING_NAME: "${{ steps.windowsSecrets.outputs.AZURE_CODE_SIGNING_NAME }}"
+        AZURE_ENDPOINT: "${{ steps.windowsSecrets.outputs.AZURE_ENDPOINT }}"
+        AZURE_PUBLISHER_NAME: "${{ steps.windowsSecrets.outputs.AZURE_PUBLISHER_NAME }}"
+        AZURE_TENANT_ID: "${{ steps.windowsSecrets.outputs.AZURE_TENANT_ID }}"
+        MIXPANEL_TOKEN: "${{ secrets.MIXPANEL_PROJECT_TOKEN }}"
+        MIXPANEL_STAGE: "prod"
+        SENTRY_AUTH_TOKEN: "${{ steps.secrets.outputs.SENTRY_AUTH_TOKEN }}"
+        SENTRY_DSN: "${{ steps.secrets.outputs.SENTRY_DSN }}"
+        SENTRY_ORG: "${{ steps.secrets.outputs.SENTRY_ORG }}"
+        SENTRY_PROJECT: "${{ steps.secrets.outputs.SENTRY_PROJECT }}"
+        UPDATES_SERVER_PRODUCT_NAME: "${{ secrets.UPDATES_SERVER_PRODUCT_NAME }}"
+        GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        NODE_ENV: "production"
+      run: npm run build -- --win --publish
+
+  post_release:
+    name: Post release
+    needs: build_release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        # required to compare versions in the
+        # license book summary
+        fetch-depth: 0
+    - name: Install dependencies
+      run: npm ci
+    - name: Send license book summary
+      env:
+        EMAIL_HOST: "${{ secrets.EMAIL_HOST }}"
+        EMAIL_PASSWORD: "${{ secrets.EMAIL_PASSWORD }}"
+        EMAIL_REPLY_TO: "${{ secrets.EMAIL_REPLY_TO }}"
+        EMAIL_TO: "${{ secrets.EMAIL_TO }}"
+        EMAIL_USERNAME: "${{ secrets.EMAIL_USERNAME }}"
+      run: npm run send-license-book-summary
+
+  communicate_release:
+    name: Communicate release
+    needs:
+    - pre_release
+    - build_release
+    runs-on: ubuntu-latest
+
+    # skip for release candidates
+    if: contains(needs.pre_release.outputs.tag, 'rc') == false
+    steps:
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.0.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/products/desktop-modeler/ci/slack_integration SUPPORT_SLACK_CHANNEL_ID;
+          secret/data/products/desktop-modeler/ci/slack_integration SLACK_BOT_TOKEN;
+          secret/data/products/desktop-modeler/ci/slack_integration RELEASE_MANAGER_GROUP_ID;
+    - name: Get changelog link
+      id: changelog
+      run: |
+        VERSION="$(echo ${{ needs.pre_release.outputs.tag }} | sed 's/v//' | tr -d '.')"
+        echo "LINK=https://github.com/camunda/camunda-modeler/blob/develop/CHANGELOG.md#$VERSION" >> $GITHUB_OUTPUT
+    - name: Get milestone link
+      id: milestone
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Fetch the milestone of the currently open release issue
+        MILESTONE=$(gh api -H "Accept: application/vnd.github.v3+json" \
+          "/repos/camunda/camunda-modeler/issues?state=open&labels=release" \
+          --jq "[.[] | .milestone.title ][0]"
+        )
+        echo "LINK=https://github.com/camunda/camunda-modeler/issues?q=is%3Aissue+label%3Achannel%3Asupport+milestone%3A$MILESTONE" >> $GITHUB_OUTPUT
+    - name: Post to a Slack channel
+      uses: slackapi/slack-github-action@v2
+      with:
+        method: chat.postMessage
+        token: ${{ steps.secrets.outputs.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ steps.secrets.outputs.SUPPORT_SLACK_CHANNEL_ID }}
+          blocks:
+            - type: section
+              text:
+                type: mrkdwn
+                text: '[fyi] Hi, Desktop Modeler ${{ needs.pre_release.outputs.tag }} release is upcoming. Contact <!subteam^${{ steps.secrets.outputs.RELEASE_MANAGER_GROUP_ID }}> in case of any questions.'
+            - type: section
+              text:
+                type: mrkdwn
+                text: '<${{ steps.changelog.outputs.LINK }}|Changelog>'
+            - type: section
+              text:
+                type: mrkdwn
+                text: '<${{ steps.milestone.outputs.LINK }}|Closed issues related to support>'
