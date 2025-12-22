@@ -1,0 +1,22 @@
+{
+  "name": "bpmn",
+  "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+  "prefix": "bpmn",
+  "xml": { "tagAlias": "lowerCase" },
+  "types": [],
+  "emumerations": [],
+  "associations": [],
+  "meta": {
+    "allowedIn": [ "*" ]
+  },
+  "moddleExtensions": {
+    "bpmn:MessageFlow": {
+      "superClass": [ "bpmn:MessageFlow" ],
+      "properties": [
+        { "name": "type", "isAttr": true, "type": "String" },
+        { "name": "participant1", "isAttr": true, "type": "String" },
+        { "name": "participant2", "isAttr": true, "type": "String" }
+      ]
+    }
+  }
+}

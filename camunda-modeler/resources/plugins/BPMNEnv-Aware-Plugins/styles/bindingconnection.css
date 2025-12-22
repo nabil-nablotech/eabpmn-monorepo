@@ -1,0 +1,40 @@
+/* Binding connection styling */
+.djs-connection.binding-connection .djs-visual {
+  stroke: #4CAF50 !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 5, 5 !important;
+}
+
+.djs-connection.binding-connection:hover .djs-visual {
+  stroke: #66BB6A !important;
+  stroke-width: 3 !important;
+}
+
+/* Connection preview during creation */
+.connect-preview.binding-connection {
+  stroke: #4CAF50 !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 5, 5 !important;
+  marker-start: url(#binding-arrow-start);
+  marker-end: url(#binding-arrow-end);
+}
+
+/* Highlighting valid targets */
+.djs-element.connect-target-valid {
+  outline: 2px solid #4CAF50 !important;
+  outline-offset: 2px;
+}
+
+.djs-element.connect-target-invalid {
+  outline: 2px solid #f44336 !important;
+  outline-offset: 2px;
+  opacity: 0.5;
+}
+
+/* Context pad binding button */
+.bpmn-icon-binding-connection::before {
+  content: '⇄';
+  font-size: 18px;
+  font-weight: bold;
+  color: #4CAF50;
+}

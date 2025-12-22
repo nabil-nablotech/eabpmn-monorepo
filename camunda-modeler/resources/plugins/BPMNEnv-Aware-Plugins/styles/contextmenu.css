@@ -1,0 +1,382 @@
+/* ============================================================================
+   Context Menu Styles - Movement type menu and forms
+   ============================================================================ */
+
+/* Overlay z-index management */
+.djs-overlay-container .movement-type-menu {
+  z-index: 99999 !important;
+}
+
+.djs-overlay[data-overlay-id*="movement-type-menu"] {
+  z-index: 99998 !important;
+}
+
+.djs-overlay-container {
+  z-index: 99997 !important;
+}
+
+/* Main menu container */
+.movement-type-menu {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  width: 250px;
+  max-width: 280px;
+  font-family: system-ui, -apple-system, sans-serif;
+  z-index: 99999 !important;
+  position: relative;
+}
+
+/* Menu header */
+.movement-type-menu .menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.movement-type-menu .menu-header .title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin: 0;
+  flex: 1;
+}
+
+.movement-type-menu .btn-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 4px;
+  color: #666;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  z-index: 10;
+  position: relative;
+}
+
+.movement-type-menu .btn-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.movement-type-menu .btn-close:active {
+  background: #e0e0e0;
+  transform: scale(0.95);
+}
+
+.movement-type-menu .close-icon {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  user-select: none;
+}
+
+.movement-type-menu .btn-close:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 1px;
+}
+
+.movement-type-menu:focus {
+  outline: none;
+}
+
+.movement-type-menu .btn-close:hover .close-icon {
+  transform: rotate(90deg);
+}
+
+/* Touch device adjustments */
+@media (hover: none) {
+  .movement-type-menu .btn-close {
+    background: #f5f5f5;
+    color: #555;
+  }
+  
+  .movement-type-menu .btn-close:hover .close-icon {
+    transform: none;
+  }
+}
+
+/* Current type display */
+.movement-type-menu .current-type {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Type buttons */
+.movement-type-menu .buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.movement-type-menu .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 5;
+}
+
+.movement-type-menu .btn:hover:not(.btn-disabled):not(.btn-current) {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.movement-type-menu .btn.btn-current {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+  cursor: default;
+}
+
+.movement-type-menu .btn.btn-disabled {
+  background: #f9f9f9;
+  border-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.movement-type-menu .btn.btn-current img {
+  opacity: 1;
+}
+
+.movement-type-menu .btn.btn-disabled img {
+  opacity: 0.4;
+}
+
+.movement-type-menu .current-icon {
+  color: #2196f3;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+/* Warning states */
+.movement-type-menu .btn.btn-warning {
+  background: #fff3e0;
+  border-color: #ff9800;
+  color: #e65100;
+}
+
+.movement-type-menu .btn.btn-warning:hover {
+  background: #ffe0b2;
+  border-color: #f57c00;
+  color: #bf360c;
+}
+
+.movement-type-menu .warning-icon {
+  color: #f57c00;
+  margin-left: auto;
+  font-size: 14px;
+  cursor: help; 
+  padding: 2px;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.movement-type-menu .warning-icon:hover {
+  background-color: rgba(245, 124, 0, 0.1);
+}
+
+.movement-type-menu .btn.btn-warning:hover .warning-icon {
+  color: #ef6c00;
+  background-color: rgba(239, 108, 0, 0.15);
+}
+
+/* Special styling for movement type */
+.movement-type-menu .btn.btn-current[data-type="movement"] {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.movement-type-menu .btn.btn-current[data-type="movement"]:hover {
+  background: linear-gradient(135deg, #bbdefb 0%, #dcedc8 100%);
+  border-color: #388e3c;
+}
+
+/* Button spacing */
+.movement-type-menu .buttons > .btn + .btn {
+  margin-left: 0px;
+}
+
+/* Current destination display */
+.movement-type-menu .current-destination {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  border-left: 3px solid #4caf50;
+}
+
+.movement-type-menu .current-destination strong {
+  color: #2e7d32;
+}
+
+/* Status and warning messages */
+.movement-type-menu .menu-warning {
+  background: #fff8e1;
+  border: 1px solid #ffb74d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.movement-type-menu .warning-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.movement-type-menu .warning-text {
+  color: #ef6c00;
+  font-size: 12px;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.movement-type-menu .menu-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #c62828;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.movement-type-menu .menu-info {
+  background: #e8f5e8;
+  color: #2e7d32;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  border-left: 3px solid #4caf50;
+}
+
+/* Action buttons */
+.movement-type-menu .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.movement-type-menu .btn-save {
+  background: #4caf50;
+  color: white;
+  border: 1px solid #4caf50;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 6;
+  position: relative;
+}
+
+.movement-type-menu .btn-save:hover {
+  background: #388e3c;
+  border-color: #388e3c;
+}
+
+.movement-type-menu .btn-cancel {
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  z-index: 6;
+  position: relative;
+}
+
+.movement-type-menu .btn-cancel:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.movement-type-menu .btn-confirm {
+  background: #2196f3;
+  color: white;
+  border: 1px solid #2196f3;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  z-index: 6;
+  position: relative;
+}
+
+.movement-type-menu .btn-confirm:hover {
+  background: #1976d2;
+  border-color: #1976d2;
+}
+
+/* Confirmation message */
+.movement-type-menu .confirmation-message {
+  margin: 12px 0;
+}
+
+.movement-type-menu .change-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.movement-type-menu .from-type {
+  color: #d32f2f;
+}
+
+.movement-type-menu .arrow {
+  color: #666;
+  font-weight: bold;
+}
+
+.movement-type-menu .to-type {
+  color: #2e7d32;
+}
+
+/* Z-index management for elements */
+.movement-type-menu .menu-warning,
+.movement-type-menu .menu-info,
+.movement-type-menu .validation-info {
+  z-index: 4;
+  position: relative;
+}

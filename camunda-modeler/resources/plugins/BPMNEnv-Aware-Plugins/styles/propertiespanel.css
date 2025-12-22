@@ -1,0 +1,367 @@
+/* ============================================================================
+   Properties Panel Styles - Task attributes and destination details
+   ============================================================================ */
+
+/* Properties panel description text for environment section */
+.bio-properties-panel-entry .bio-properties-panel-description {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Environment section in expanded state */
+.bio-properties-panel-group[data-group-id="group-environment-config"] .bio-properties-panel-group-entries.open {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+/* Enhanced dot indicator for environment section */
+.bio-properties-panel-group[data-group-id="group-environment-config"] .bio-properties-panel-dot {
+  background-color: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.3);
+}
+
+/* Environment section header when loaded */
+.bio-properties-panel-group[data-group-id="group-environment-config"] .bio-properties-panel-group-header:not(.empty) {
+  border-left: 3px solid #4caf50;
+  padding-left: 12px;
+  margin-left: -3px;
+}
+
+/* ============================================================================
+   DESTINATION ATTRIBUTES STYLES (Properties Panel)
+   ============================================================================ */
+
+/* Container for destination attributes */
+.destination-attributes {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* When destination is found */
+.destination-found {
+  background: #f8fff8;
+  border-color: #c8e6c9;
+}
+
+/* When destination is not found */
+.destination-not-found {
+  background: #fff3e0;
+  border-color: #ffb74d;
+}
+
+/* When destination has no attributes */
+.destination-no-attributes {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+/* Attributes header */
+.attributes-header {
+  margin-bottom: 6px;
+}
+
+.attributes-header .bio-properties-panel-description {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Attributes content container */
+.attributes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Individual attribute item */
+.attribute-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  min-height: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+/* Hover effects for attribute items */
+.attribute-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateX(2px);
+  border-left: 2px solid #4caf50;
+  padding-left: 5px;
+}
+
+/* Attribute key (label) */
+.attribute-key {
+  font-weight: 500;
+  color: #555;
+  font-size: 11px;
+  text-transform: capitalize;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+/* Attribute value (content) */
+.attribute-value {
+  font-weight: 600;
+  color: #333;
+  font-size: 11px;
+  text-align: right;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+/* Specific attribute value types */
+.attribute-value-success {
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.attribute-value-warning {
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.attribute-value-zone {
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.attribute-value-purpose {
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+/* Animation for attribute updates */
+@keyframes attributeUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.destination-attributes.updating {
+  animation: attributeUpdate 0.4s ease-in-out;
+}
+
+/* Enhanced error state */
+.destination-not-found .bio-properties-panel-description {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef6c00;
+  font-weight: 500;
+}
+
+/* Success state enhancement */
+.destination-found .attributes-header .bio-properties-panel-description {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+/* Enhanced styling for different value types */
+.attribute-value[data-type="number"] {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.attribute-value[data-type="boolean"] {
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.attribute-value[data-type="string"] {
+  font-style: italic;
+}
+
+/* Status indicators for attribute values */
+.attribute-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.attribute-status.available {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.attribute-status.full {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.attribute-status.warning {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+/* Attribute groups for better organization */
+.attribute-group {
+  margin-bottom: 6px;
+}
+
+.attribute-group-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+  padding-left: 2px;
+}
+
+/* Special styling for coordinates or complex values */
+.attribute-value.coordinates {
+  font-size: 9px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attribute-value.coordinates:hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
+  z-index: 10;
+  position: relative;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 4px;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading state for when attributes are being fetched */
+.destination-attributes.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.destination-attributes.loading::after {
+  content: "Loading attributes...";
+  display: block;
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Empty state styling improvements */
+.destination-no-attributes .bio-properties-panel-description {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Compact layout option */
+.destination-attributes.compact .attribute-item {
+  padding: 2px 4px;
+  min-height: 16px;
+}
+
+.destination-attributes.compact .attribute-key,
+.destination-attributes.compact .attribute-value {
+  font-size: 10px;
+}
+
+/* Tooltip for attribute explanations */
+.attribute-item[title] {
+  cursor: help;
+}
+
+/* Focus styles for accessibility */
+.attribute-item:focus {
+  outline: 2px solid #4caf50;
+  outline-offset: 1px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 300px) {
+  .attribute-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+  
+  .attribute-key {
+    margin-right: 0;
+    margin-bottom: 2px;
+  }
+  
+  .attribute-value {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .destination-found {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+  }
+  
+  .attribute-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .attribute-value {
+    color: #fff;
+  }
+}
+
+/* Print styles */
+@media print {
+  .destination-attributes {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    color: black !important;
+  }
+  
+  .attribute-value {
+    color: black !important;
+    background: transparent !important;
+  }
+}

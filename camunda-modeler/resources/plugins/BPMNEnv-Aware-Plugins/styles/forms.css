@@ -1,0 +1,166 @@
+/* ============================================================================
+   Form Styles - Input fields, labels, and form controls
+   ============================================================================ */
+
+/* Form inputs and selects */
+.movement-type-menu .form-input,
+.movement-type-menu .form-select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  z-index: 8;
+  position: relative;
+}
+
+.movement-type-menu .form-input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.movement-type-menu .form-select option {
+  z-index: 99990;
+}
+
+/* Form labels */
+.movement-type-menu .form-label {
+  display: block;
+  font-weight: 500;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+/* Form rows */
+.movement-type-menu .row {
+  margin-bottom: 8px;
+}
+
+.movement-type-menu .row:last-of-type {
+  margin-bottom: 12px;
+}
+
+/* Help text */
+.movement-type-menu .help-text {
+  color: #666;
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Enhanced form label for autocomplete */
+.movement-type-menu .autocomplete-container + small.help-text {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 11px;
+}
+
+.movement-type-menu .autocomplete-container + small.help-text::before {
+  content: "💡";
+  font-size: 12px;
+}
+
+/* Destination select styling */
+.movement-type-menu .destination-select {
+  margin-bottom: 8px;
+}
+
+.movement-type-menu .destination-select:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Environment configuration info in forms */
+.movement-type-menu .env-config-info {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.movement-type-menu .env-config-info.env-config-missing {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  color: #ef6c00;
+}
+
+.movement-type-menu .env-config-info:not(.env-config-missing) {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  color: #2e7d32;
+}
+
+.movement-type-menu .config-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.movement-type-menu .config-icon {
+  font-size: 14px;
+}
+
+.movement-type-menu .config-text {
+  flex: 1;
+}
+
+.movement-type-menu .config-summary {
+  font-size: 11px;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.movement-type-menu .config-action {
+  margin-top: 4px;
+}
+
+.movement-type-menu .config-action small {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* Special styling when no environment is loaded */
+.env-config-missing + .row .destination-autocomplete {
+  border-color: #ffb74d !important;
+}
+
+.env-config-missing + .row .destination-autocomplete:focus {
+  border-color: #ff9800 !important;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 300px) {
+  .movement-type-menu .form-input,
+  .movement-type-menu .form-select {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .movement-type-menu .form-input:focus,
+  .movement-type-menu .form-select:focus {
+    border-color: #000 !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .movement-type-menu .form-input,
+  .movement-type-menu .form-select {
+    border: 1px solid #000 !important;
+    background: white !important;
+  }
+}

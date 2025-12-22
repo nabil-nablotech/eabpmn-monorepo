@@ -1,0 +1,140 @@
+/* ============================================================================
+   Replace Menu Styles - Custom task types in native Change element menu
+   ============================================================================ */
+
+/* Group header for Space Tasks in replace menu */
+.djs-popup-group[data-group="space-tasks"] {
+  border-top: 1px solid #e0e0e0;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* Optional: Add a group label */
+.djs-popup-group[data-group="space-tasks"]::before {
+  content: 'Space Tasks';
+  display: block;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* Regular task icon (no custom styling needed, uses native) */
+.djs-popup .entry#replace-with-regular-task .bpmn-icon-task {
+  /* Inherits native styling */
+}
+
+/* Movement task icon */
+.djs-popup .entry[data-id="replace-with-movement"] .bpmn-icon-task::before,
+.djs-popup .bpmn-icon-task.space-task-movement::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: url("../icons/customTask/movement.svg") no-repeat center / contain;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* Binding task icon */
+.djs-popup .entry[data-id="replace-with-binding"] .bpmn-icon-task::before,
+.djs-popup .bpmn-icon-task.space-task-binding::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: url("../icons/customTask/binding.svg") no-repeat center / contain;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* Unbinding task icon */
+.djs-popup .entry[data-id="replace-with-unbinding"] .bpmn-icon-task::before,
+.djs-popup .bpmn-icon-task.space-task-unbinding::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: url("../icons/customTask/unbinding.svg") no-repeat center / contain;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* Highlight current type (optional) */
+.djs-popup .entry.current-type {
+  background-color: #e3f2fd;
+}
+
+.djs-popup .entry.current-type:hover {
+  background-color: #bbdefb;
+}
+
+/* Visual separator between native tasks and custom tasks */
+.djs-popup-group[data-group="space-tasks"] {
+  position: relative;
+}
+
+.djs-popup-group[data-group="space-tasks"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e0e0e0 20%, #e0e0e0 80%, transparent);
+}
+
+/* Ensure icons are visible and properly aligned */
+.djs-popup .bpmn-icon-task.space-task-movement,
+.djs-popup .bpmn-icon-task.space-task-binding,
+.djs-popup .bpmn-icon-task.space-task-unbinding {
+  display: flex;
+  align-items: center;
+}
+
+/* If SVG icons don't load, show text fallback */
+.djs-popup .bpmn-icon-task.space-task-movement::after {
+  content: 'M';
+  display: none; /* Hidden by default, shown if ::before fails */
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-right: 8px;
+}
+
+.djs-popup .bpmn-icon-task.space-task-binding::after {
+  content: 'B';
+  display: none;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-weight: bold;
+  color: #2196F3;
+  margin-right: 8px;
+}
+
+.djs-popup .bpmn-icon-task.space-task-unbinding::after {
+  content: 'U';
+  display: none;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-weight: bold;
+  color: #FF9800;
+  margin-right: 8px;
+}
+
+/* Support for imageUrl if provided by the provider */
+.djs-popup .entry[data-id^="replace-with-"] img {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}

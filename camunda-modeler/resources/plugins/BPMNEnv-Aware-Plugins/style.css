@@ -1,0 +1,381 @@
+/* ============================================================================
+   Enhanced Foundation - Native Camunda Modeler Colors & Variables
+   BPMN Environment - Custom tasks with native foundation
+   ============================================================================ */
+
+@import url('./styles/core.css');
+@import url('./styles/contextmenu.css');
+@import url('./styles/forms.css');
+@import url('./styles/autocomplete.css');
+@import url('./styles/propertiespanel.css');
+@import url('./styles/environment.css');
+@import url('./styles/filedialog.css');
+@import url('./styles/detailsstyling.css'); 
+@import url('./styles/replacemenu.css');
+
+/* Enhanced foundation for native integration */
+:root {
+  /* Native Camunda Modeler color system */
+  --cm-primary: #0e6ba8;
+  --cm-primary-light: #e8f4fd;
+  --cm-primary-dark: #0c5aa6;
+  --cm-border: #cfcfcf;
+  --cm-border-hover: #999;
+  --cm-background: #fff;
+  --cm-text: #333;
+  --cm-text-light: #666;
+  --cm-text-muted: #999;
+  
+  /* State colors matching Camunda exactly */
+  --cm-success: #28a745;
+  --cm-success-light: #d4edda;
+  --cm-success-border: #c3e6cb;
+  --cm-success-text: #155724;
+  
+  --cm-warning: #ffc107;
+  --cm-warning-light: #fff3cd;
+  --cm-warning-border: #ffeaa7;
+  --cm-warning-text: #856404;
+  
+  --cm-danger: #dc3545;
+  --cm-danger-light: #f8d7da;
+  --cm-danger-border: #f5c6cb;
+  --cm-danger-text: #721c24;
+  
+  --cm-info: #17a2b8;
+  --cm-info-light: #d1ecf1;
+  --cm-info-border: #bee5eb;
+  --cm-info-text: #0c5460;
+  
+  /* Gray scale matching Camunda */
+  --cm-gray-50: #f8f9fa;
+  --cm-gray-100: #f0f0f0;
+  --cm-gray-200: #e9ecef;
+  --cm-gray-300: #dee2e6;
+  --cm-gray-400: #ced4da;
+  --cm-gray-500: #adb5bd;
+  --cm-gray-600: #6c757d;
+  --cm-gray-700: #495057;
+  --cm-gray-800: #343a40;
+  
+  /* Spacing and sizing - Camunda native values */
+  --cm-border-radius: 3px;
+  --cm-input-padding: 6px 8px;
+  --cm-font-size: 12px;
+  --cm-font-size-small: 11px;
+  --cm-font-size-tiny: 10px;
+  --cm-line-height: 1.35;
+  
+  /* Spacing scale */
+  --cm-space-xs: 2px;
+  --cm-space-sm: 4px;
+  --cm-space-md: 8px;
+  --cm-space-lg: 12px;
+  --cm-space-xl: 16px;
+  
+  /* Shadows - native Camunda shadows */
+  --cm-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --cm-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --cm-shadow-focus: 0 0 0 2px rgba(14, 107, 168, 0.2);
+  
+  /* Transitions - native timing */
+  --cm-transition: all 0.15s ease-in-out;
+  --cm-transition-fast: all 0.1s ease-in-out;
+}
+
+/* Font integration - match Camunda exactly */
+.movement-type-menu,
+.bio-properties-panel-entry,
+.djs-context-pad {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Enhanced focus styles - native Camunda behavior */
+.movement-type-menu *:focus,
+.bio-properties-panel-entry *:focus {
+  outline: none;
+}
+
+.movement-type-menu *:focus-visible,
+.bio-properties-panel-entry *:focus-visible {
+  outline: 2px solid var(--cm-primary);
+  outline-offset: 1px;
+}
+
+/* Color harmonization - update your existing styles to use native colors */
+.movement-type-menu .btn-save {
+  background: var(--cm-primary) !important;
+  border-color: var(--cm-primary) !important;
+  color: white !important;
+}
+
+.movement-type-menu .btn-save:hover {
+  background: var(--cm-primary-dark) !important;
+  border-color: var(--cm-primary-dark) !important;
+}
+
+.movement-type-menu .form-input:focus,
+.movement-type-menu .form-select:focus,
+.destination-autocomplete:focus {
+  border-color: var(--cm-primary) !important;
+  box-shadow: var(--cm-shadow-focus) !important;
+}
+
+.movement-type-menu .btn.btn-current {
+  background: var(--cm-primary-light) !important;
+  border-color: var(--cm-primary) !important;
+  color: var(--cm-primary-dark) !important;
+}
+
+.movement-type-menu .menu-warning {
+  background: var(--cm-warning-light) !important;
+  border-color: var(--cm-warning-border) !important;
+  color: var(--cm-warning-text) !important;
+}
+
+.movement-type-menu .menu-error {
+  background: var(--cm-danger-light) !important;
+  border-color: var(--cm-danger-border) !important;
+  color: var(--cm-danger-text) !important;
+}
+
+.movement-type-menu .menu-info {
+  background: var(--cm-success-light) !important;
+  border-color: var(--cm-success-border) !important;
+  color: var(--cm-success-text) !important;
+}
+
+/* Environment configuration color updates */
+.env-file-load-btn:focus,
+.env-reload-btn:focus {
+  border-color: var(--cm-primary) !important;
+  box-shadow: var(--cm-shadow-focus) !important;
+}
+
+.env-config-status.loaded {
+  background: var(--cm-success-light) !important;
+  border-color: var(--cm-success-border) !important;
+  color: var(--cm-success-text) !important;
+}
+
+/* Properties panel color integration */
+.space-type-select:focus,
+.space-destination-input:focus,
+.space-binding-input:focus {
+  border-color: var(--cm-primary) !important;
+  box-shadow: var(--cm-shadow-focus) !important;
+}
+
+.destination-not-found {
+  background: var(--cm-warning-light) !important;
+  border-color: var(--cm-warning-border) !important;
+}
+
+/* Autocomplete integration */
+.autocomplete-item:hover,
+.autocomplete-item.highlighted {
+  background: rgba(14, 107, 168, 0.1) !important;
+  color: var(--cm-primary-dark) !important;
+}
+
+/* Context pad integration - maintain your existing functionality */
+.djs-context-pad .entry:focus {
+  outline: 1px solid var(--cm-primary);
+  outline-offset: 1px;
+}
+
+/* Enhanced dot indicators for properties panel */
+.bio-properties-panel-dot {
+  background-color: var(--cm-primary) !important;
+}
+
+/* Z-index management - ensure proper layering */
+.movement-type-menu {
+  z-index: 1001 !important; /* Above native context pad */
+}
+
+.autocomplete-dropdown {
+  z-index: 1010 !important; /* Above menus */
+}
+
+/* Responsive font sizing - match Camunda's responsive behavior */
+@media (max-width: 768px) {
+  :root {
+    --cm-font-size: 11px;
+    --cm-font-size-small: 10px;
+    --cm-font-size-tiny: 9px;
+  }
+}
+
+/* High contrast mode - match Camunda's accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --cm-border: #000;
+    --cm-border-hover: #000;
+    --cm-text: #000;
+  }
+  
+  .movement-type-menu .btn:hover:not(.btn-disabled):not(.btn-current) {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+  }
+  
+  .form-input:focus,
+  .destination-autocomplete:focus {
+    border-color: #000 !important;
+    box-shadow: 0 0 0 2px #000 !important;
+  }
+}
+
+/* Print styles - match Camunda's print behavior */
+@media print {
+  .movement-type-menu,
+  .autocomplete-dropdown,
+  .djs-context-pad {
+    display: none !important;
+  }
+  
+  .form-input,
+  .env-file-load-btn {
+    border: 1px solid #000 !important;
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Animation consistency - match Camunda's timing */
+@keyframes nativeSpinner {
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: nativeSpinner 0.8s linear infinite;
+}
+
+/* Reduced motion support - match Camunda's accessibility */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cm-transition: none;
+    --cm-transition-fast: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+
+/******/
+
+#bpenv-container {
+  height: 100vh;
+}
+/* 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#bpenv-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#bpenv-container > .map-wrapper {
+  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+} 
+*/
+
+#bpenv-container #header {
+  height: 40px;
+}
+
+#bpenv-container #map {
+  width: 75%;
+  height: 100%;
+  margin-left: 0;
+}
+
+#bpenv-container .map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#bpenv-container .toolbar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  background: #fff;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+#bpenv-container .toolbar-btn {
+  background-color: rgb(33, 37, 41);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#bpenv-container .toolbar-btn-selected {
+  color: rgb(33, 37, 41);
+  background-color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#bpenv-container .sidebar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 25%;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+#bpenv-container .sidebar-title {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+#bpenv-container .sidebar-text {
+  color: #fff;
+  font-size: 14px;
+}
+
+#bpenv-container .custom-placeholder::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#bpenv-container .no-focus-outline:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+

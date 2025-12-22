@@ -1,0 +1,89 @@
+/* ============================================================================
+   Core Styles - Basic task types and palette overlays
+   ============================================================================ */
+
+span.menu-task {
+  display: block;
+}
+
+span.menu-task:first-letter {
+  text-transform: uppercase;
+}
+
+/* Palette overlays */
+.djs-palette .entry.movement-overlay,
+.djs-palette .entry.binding-overlay,
+.djs-palette .entry.unbinding-overlay {
+  position: relative;
+}
+
+.djs-palette .entry.movement-overlay::after {
+  content: '';
+  position: absolute;
+  top: 52%;
+  left: 62%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  background: url("../icons/customTask/movement.svg") no-repeat center / contain;
+  pointer-events: none;
+}
+
+.djs-palette .entry.binding-overlay::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  background: url("../icons/customTask/binding.svg") no-repeat center / contain;
+  pointer-events: none;
+}
+
+.djs-palette .entry.unbinding-overlay::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  background: url("../icons/customTask/unbinding.svg") no-repeat center / contain;
+  pointer-events: none;
+}
+
+/* Task badges */
+.djs-overlay-binding-badge,
+.djs-overlay-unbinding-badge,
+.djs-overlay-movement-badge {
+  z-index: 1000 !important;
+}
+
+.binding-badge,
+.unbinding-badge,
+.movement-badge {
+  width: 45px;
+  height: 25px;
+  margin: 3px 0 0 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
+}
+
+.movement-badge {
+  height: 35px;
+  width: 50px;
+  margin: 0 0 0 0;
+  background-image: url("../icons/customTask/movement.svg");
+}
+
+.binding-badge {
+  background-image: url("../icons/customTask/binding.svg");
+}
+
+.unbinding-badge {
+  background-image: url("../icons/customTask/unbinding.svg");
+}
+

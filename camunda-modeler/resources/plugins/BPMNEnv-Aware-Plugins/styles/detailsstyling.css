@@ -1,0 +1,199 @@
+/* ============================================================================
+   Consistent Details Styling - Environment Config & Destination Attributes
+   ============================================================================ */
+
+/* Shared base styling for both configuration details and destination attributes */
+.env-config-details,
+.destination-attributes {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Override destination-attributes specific states to match config-details */
+.destination-found {
+  background: #f8f9fa !important;
+  border-color: #e9ecef !important;
+}
+
+.destination-not-found {
+  background: #fff3cd !important;
+  border-color: #ffeaa7 !important;
+}
+
+.destination-no-attributes {
+  background: #f8f9fa !important;
+  border-color: #e9ecef !important;
+}
+
+/* Shared metric/attribute item styling */
+.config-metric,
+.attribute-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 12px;
+}
+
+.config-metric:last-child,
+.attribute-item:last-child {
+  border-bottom: none;
+}
+
+/* Shared label styling */
+.metric-label,
+.attribute-key {
+  color: #666;
+  font-weight: 500;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+/* Shared value styling */
+.metric-value,
+.attribute-value {
+  color: #333;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: right;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  flex: 1;
+}
+
+/* Header styling consistency */
+.attributes-header {
+  margin-bottom: 6px;
+}
+
+.attributes-header .bio-properties-panel-description {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px 0;
+  font-weight: 500;
+  font-size: 11px;
+  color: #666;
+}
+
+/* Success state - keep green for found destinations */
+.destination-found .attributes-header .bio-properties-panel-description {
+  color: #155724;
+}
+
+/* Warning state - for not found destinations */
+.destination-not-found .bio-properties-panel-description {
+  color: #856404;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Neutral state - for no attributes */
+.destination-no-attributes .bio-properties-panel-description {
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-style: italic;
+}
+
+/* Remove hover effects to match config-details */
+.attribute-item:hover {
+  background: transparent;
+  transform: none;
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Remove shadows and special styling */
+.destination-attributes {
+  box-shadow: none;
+}
+
+.attribute-item {
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+  min-height: auto;
+  padding: 4px 0;
+}
+
+.attribute-item:last-child {
+  border-bottom: none;
+}
+
+/* Consistent content container */
+.attributes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Remove animations to match static config-details */
+.destination-attributes.updating {
+  animation: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 300px) {
+  .config-metric,
+  .attribute-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .metric-label,
+  .attribute-key {
+    margin-right: 0;
+    margin-bottom: 2px;
+  }
+  
+  .metric-value,
+  .attribute-value {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .env-config-details,
+  .destination-attributes {
+    background: #fff;
+    color: #000;
+    border-color: #000;
+  }
+  
+  .config-metric,
+  .attribute-item {
+    border-bottom-color: #000;
+  }
+  
+  .metric-value,
+  .attribute-value {
+    color: #000;
+  }
+}
+
+/* Print styles */
+@media print {
+  .env-config-details,
+  .destination-attributes {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    color: black !important;
+  }
+  
+  .metric-value,
+  .attribute-value {
+    color: black !important;
+  }
+}

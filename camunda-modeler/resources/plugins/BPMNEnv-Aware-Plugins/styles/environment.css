@@ -1,0 +1,578 @@
+/* ============================================================================
+   Environment Configuration Styles
+   ============================================================================ */
+
+/* Environment file input container */
+.env-file-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.env-file-load-btn {
+  text-align: left !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.2s ease;
+  background: white !important;
+  border: 1px solid #cfcfcf !important;
+  padding: 8px 12px !important;
+  border-radius: 3px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+}
+
+.env-file-load-btn:hover {
+  background: #f8f9fa !important;
+  border-color: #4caf50 !important;
+  color: #2e7d32 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.env-file-load-btn:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+.env-file-load-btn .file-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.env-file-load-btn .file-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* File input hidden element */
+.env-file-input {
+  display: none !important;
+}
+
+/* Loading states */
+.env-file-load-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+  background: #e3f2fd !important;
+  border-color: #2196f3 !important;
+  color: #1976d2 !important;
+}
+
+.env-file-load-btn.success {
+  background: #e8f5e8 !important;
+  border-color: #4caf50 !important;
+  color: #2e7d32 !important;
+}
+
+.env-file-load-btn.error {
+  background: #ffebee !important;
+  border-color: #d32f2f !important;
+  color: #d32f2f !important;
+}
+
+/* Configuration status display */
+.env-config-status {
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+
+.env-config-status.loaded {
+  background: #e8f5e8;
+  border-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.env-config-status.empty {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
+}
+
+.config-status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.status-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.status-text {
+  flex: 1;
+}
+
+/* Configuration file info */
+.config-file-info {
+  margin-left: 24px; /* Align with status text */
+}
+
+.config-file-name {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #1b5e20;
+}
+
+.config-source {
+  font-size: 11px;
+  color: #4caf50;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.config-load-time {
+  font-size: 11px;
+  color: #666;
+  font-style: italic;
+}
+
+/* No configuration info */
+.config-info {
+  margin-left: 24px; /* Align with status text */
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.config-instruction {
+  margin: 0 0 8px 0;
+  color: #495057;
+}
+
+.config-instruction code {
+  background: #e9ecef;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 11px;
+  color: #495057;
+}
+
+.config-help {
+  margin: 0;
+  color: #6c757d;
+  font-size: 11px;
+}
+
+/* Configuration details */
+.env-config-details {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.config-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.config-metric:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.metric-value {
+  color: #333;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Environment controls */
+.env-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.env-reload-btn {
+  text-align: center !important;
+  cursor: pointer !important;
+  background: white !important;
+  border: 1px solid #4caf50 !important;
+  color: #2e7d32 !important;
+  transition: all 0.2s ease;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  border-radius: 3px !important;
+}
+
+.env-reload-btn:hover:not(:disabled) {
+  background: #e8f5e8 !important;
+  border-color: #388e3c !important;
+  color: #1b5e20 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.env-reload-btn:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* Clear configuration button */
+.env-clear-config-btn {
+  text-align: center !important;
+  cursor: pointer !important;
+  color: #d32f2f !important;
+  border-color: #d32f2f !important;
+  background: white !important;
+  transition: all 0.2s ease;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  border-radius: 3px !important;
+}
+
+.env-clear-config-btn:hover:not(:disabled) {
+  background: #ffebee !important;
+  border-color: #c62828 !important;
+  color: #c62828 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+}
+
+/* Auto-load indicator */
+.auto-load-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #4caf50;
+  background: #e8f5e8;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid #c8e6c9;
+  margin-left: 8px;
+}
+
+.auto-load-indicator.failed {
+  color: #ff9800;
+  background: #fff3e0;
+  border-color: #ffb74d;
+}
+
+/* Status animations */
+@keyframes statusPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.env-config-status.updating {
+  animation: statusPulse 0.6s ease-in-out;
+}
+
+.env-config-status.loaded .status-icon {
+  animation: statusPulse 0.8s ease-in-out;
+}
+
+/* Loading spinner for reload button */
+.env-reload-btn.loading::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #4caf50;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* File format hint */
+.env-file-format-hint {
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Progress indicator for file loading */
+.env-file-progress {
+  width: 100%;
+  height: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.env-file-progress.visible {
+  opacity: 1;
+}
+
+.env-file-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #66bb6a);
+  border-radius: 1px;
+  width: 0%;
+  transition: width 0.3s ease;
+  animation: progressShine 1.5s infinite;
+}
+
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Animation for successful load */
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.env-config-status.loaded {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+/* Status/Error state indicators */
+.env-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.env-status-indicator.auto {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.env-status-indicator.manual {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.env-status-indicator.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #f8bbd9;
+}
+
+/* Environment validation status */
+.env-validation-status {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.env-validation-status.valid {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.env-validation-status.invalid {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #f8bbd9;
+}
+
+.env-validation-status.partial {
+  background: #fff3e0;
+  color: #ef6c00;
+  border: 1px solid #ffb74d;
+}
+
+/* Environment health indicator */
+.env-health-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.env-health-indicator.healthy {
+  color: #4caf50;
+}
+
+.env-health-indicator.warning {
+  color: #ff9800;
+}
+
+.env-health-indicator.error {
+  color: #f44336;
+}
+
+/* File size indicator */
+.file-size-info {
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* Configuration path display (for debugging) */
+.config-path {
+  font-size: 10px;
+  color: #999;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+/* Quick actions for environment section */
+.env-quick-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.env-quick-action {
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.env-quick-action:hover {
+  background: #f8f9fa;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+/* Focus styles for accessibility */
+.env-file-load-btn:focus,
+.env-reload-btn:focus,
+.env-clear-config-btn:focus {
+  outline: 2px solid #4caf50;
+  outline-offset: 2px;
+}
+
+.env-clear-config-btn:focus {
+  outline-color: #d32f2f;
+}
+
+/* Responsive adjustments for environment section */
+@media (max-width: 300px) {
+  .config-metric {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .env-controls {
+    gap: 6px;
+  }
+  
+  .env-file-load-btn,
+  .env-reload-btn,
+  .env-clear-config-btn {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+  
+  .config-file-info,
+  .config-info {
+    margin-left: 20px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .env-config-status.loaded {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+  }
+  
+  .env-reload-btn {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+  }
+  
+  .env-clear-config-btn {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .env-controls {
+    display: none !important;
+  }
+  
+  .env-config-status {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    color: black !important;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+.env-file-load-btn,
+.env-reload-btn,
+.env-clear-config-btn,
+.env-config-status {
+  transition: all 0.2s ease;
+}
+
+/* Validation info for environment data */
+.env-validation-info {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.env-validation-info.success {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  color: #2e7d32;
+}
+
+.env-validation-info.warning {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  color: #ef6c00;
+}
+
+.env-validation-info.error {
+  background: #ffebee;
+  border: 1px solid #f8bbd9;
+  color: #c62828;
+}

@@ -1,0 +1,1243 @@
+import { getTaskConfig, getAllTaskTypes, TASK_TYPE_KEYS } from './TaskTypes';
+
+function SpacePropertiesProvider(
+    eventBus,
+    translate,
+    extensionService,
+    taskTypeService,
+    environmentService,
+    messageFlowXmlService,
+    elementRegistry,
+    assignmentService
+) {
+  this._eventBus = eventBus;
+  this._translate = translate;
+  this._extensionService = extensionService;
+  this._taskTypeService = taskTypeService;
+  this._environmentService = environmentService;
+  this._messageFlowXmlService = messageFlowXmlService;
+  this._elementRegistry = elementRegistry;
+  this._assignmentService = assignmentService;
+
+  console.info('SpacePropertiesProvider initialized');
+
+  eventBus.on('selection.changed', (event) => {
+    if (event.newSelection && event.newSelection.length === 1) {
+      const element = event.newSelection[0];
+
+      if (element.type === 'bpmn:Task') {
+        setTimeout(() => this.createStandaloneSpaceSection(element), 200);
+      } else if (element.type === 'bpmn:MessageFlow') {
+
+        // Show binding info for connections
+        setTimeout(() => this.createMessageFlowSpaceSection(element), 200);
+      } else {
+        setTimeout(() => this.showEnvironmentSection(), 200);
+      }
+    } else if (event.newSelection && event.newSelection.length === 0) {
+
+      // No selection - show environment configuration section
+      setTimeout(() => this.showEnvironmentSection(), 200);
+    }
+
+    // Do nothing for multiple selections
+  });
+
+  // Listen for model changes to refresh the UI
+  eventBus.on('elements.changed', (event) => {
+    if (event.elements && event.elements.length > 0) {
+      const element = event.elements[0];
+      if (element.type === 'bpmn:Task') {
+        setTimeout(() => this.refreshSpaceSection(element), 100);
+      }
+    }
+  });
+
+  // Listen for environment changes
+  eventBus.on('environment.ready', () => {
+    this.refreshEnvironmentSection();
+  });
+
+  eventBus.on('environment.cleared', () => {
+    this.refreshEnvironmentSection();
+  });
+
+  // Listen for manual file load results
+  eventBus.on('environment.manual.loaded', (event) => {
+    this.handleManualLoadResult(event);
+  });
+}
+
+SpacePropertiesProvider.$inject = [
+  'eventBus',
+  'translate',
+  'extensionService',
+  'taskTypeService',
+  'environmentService',
+  'messageFlowXmlService',
+  'elementRegistry',
+  'assignmentService'
+];
+
+/**
+ * Create Space Properties section for message flows
+ */
+SpacePropertiesProvider.prototype.createMessageFlowSpaceSection = function(messageFlow) {
+  const propertiesPanel = document.querySelector('.bio-properties-panel-scroll-container');
+  if (!propertiesPanel) {
+    console.error('Properties panel scroll container not found');
+    return;
+  }
+
+  // Remove existing space sections
+  const existingSection = propertiesPanel.querySelector('.space-properties-section');
+  if (existingSection) {
+    existingSection.remove();
+  }
+
+  // Get connection info using the XML service
+  const connectionInfo = this._messageFlowXmlService.getConnectionInfo(messageFlow);
+
+  // Create the space section for message flow
+  const section = this.createMessageFlowSection(messageFlow, connectionInfo);
+
+  // Insert after General section or at the beginning
+  const generalSection = propertiesPanel.querySelector('[data-group-id*="general"]');
+  if (generalSection && generalSection.nextSibling) {
+    propertiesPanel.insertBefore(section, generalSection.nextSibling);
+  } else {
+    propertiesPanel.insertBefore(section, propertiesPanel.firstChild);
+  }
+};
+
+/**
+ * Create the Space Properties section for message flow
+ */
+SpacePropertiesProvider.prototype.createMessageFlowSection = function(messageFlow, connectionInfo) {
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-space-properties');
+
+  const translate = this._translate;
+  const hasData = !!connectionInfo;
+  const isExpanded = hasData;
+
+  // Get participant names
+  const sourceParticipant = connectionInfo ? this._elementRegistry.get(connectionInfo.participant1) : null;
+  const targetParticipant = connectionInfo ? this._elementRegistry.get(connectionInfo.participant2) : null;
+  const sourceName = sourceParticipant?.businessObject?.name || connectionInfo?.participant1 || '';
+  const targetName = targetParticipant?.businessObject?.name || connectionInfo?.participant2 || '';
+
+  section.innerHTML = `
+  ${hasData ? `
+    <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''}">
+      <div title="Space Properties" 
+           data-title="Space Properties" 
+           class="bio-properties-panel-group-header-title">
+        Space Properties 
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        <div title="Section contains data" class="bio-properties-panel-dot"></div>
+        <button type="button" 
+                title="Toggle section" 
+                class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+               class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" 
+                  d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+      <!-- Connection Type Entry -->
+      <div data-entry-id="space-connection-type" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <label class="bio-properties-panel-label">${translate('Type')}</label>
+          <input type="text" 
+                 class="bio-properties-panel-input" 
+                 value="${connectionInfo.type}" 
+                 readonly
+                 style="background: #f8f9fa; cursor: default;" />
+        </div>
+      </div>
+
+      <!-- Source Reference Entry -->
+      <div data-entry-id="space-source-ref" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <label class="bio-properties-panel-label">${translate('Participant 1 reference')}</label>
+          <input type="text" 
+                 class="bio-properties-panel-input" 
+                 value="${connectionInfo.participant1}" 
+                 readonly
+                 title="${sourceName}"
+                 style="background: #f8f9fa; cursor: default;" />
+        </div>
+      </div>
+
+      <!-- Target Reference Entry -->
+      <div data-entry-id="space-target-ref" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <label class="bio-properties-panel-label">${translate('Participant 2 reference')}</label>
+          <input type="text" 
+                 class="bio-properties-panel-input" 
+                 value="${connectionInfo.participant2}" 
+                 readonly
+                 title="${targetName}"
+                 style="background: #f8f9fa; cursor: default;" />
+        </div>
+      </div>
+    </div>
+  ` : ''}`;
+
+  // Attach toggle event listener
+  this.attachSectionEventListeners(section, messageFlow);
+
+  return section;
+};
+
+/**
+ * Show environment configuration section when no task is selected
+ */
+SpacePropertiesProvider.prototype.showEnvironmentSection = function() {
+  const propertiesPanel = document.querySelector('.bio-properties-panel-scroll-container');
+  if (!propertiesPanel) {
+    console.error('Properties panel scroll container not found');
+    return;
+  }
+
+  // Check if environment section already exists
+  const existingEnvSection = propertiesPanel.querySelector('.space-properties-section[data-group-id="group-environment-config"]');
+  if (existingEnvSection) {
+    return;
+  }
+
+  // Remove any other space sections (task-related)
+  const existingSpaceSection = propertiesPanel.querySelector('.space-properties-section');
+  if (existingSpaceSection) {
+    existingSpaceSection.remove();
+  }
+
+  // Create the environment configuration section
+  const envSection = this.createEnvironmentSection();
+
+  // Insert at the beginning
+  propertiesPanel.insertBefore(envSection, propertiesPanel.firstChild);
+};
+
+SpacePropertiesProvider.prototype.createEnvironmentSection = function() {
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-environment-config');
+
+  const translate = this._translate;
+  const hasConfig = this._environmentService.hasConfiguration();
+  const configSummary = hasConfig ? this._environmentService.getConfigSummary() : null;
+
+  const isExpanded = hasConfig;
+
+  section.innerHTML = `
+    <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasConfig ? '' : 'empty'}">
+      <div title="Environment Configuration" data-title="Environment Configuration" class="bio-properties-panel-group-header-title">
+          Environment Configuration
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        ${hasConfig ? '<div title="Environment loaded" class="bio-properties-panel-dot"></div>' : ''}
+        <button type="button" title="Toggle section" class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+      
+      <!-- ALWAYS SHOW - Load button for new physical places -->
+      <div data-entry-id="env-file-upload" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <label class="bio-properties-panel-label">${translate('Environment File')}</label>
+          <div class="env-file-input-container">
+            <button type="button" class="env-file-load-btn bio-properties-panel-input" 
+                    style="text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+              <span class="file-text">${translate('Load environment.json')}</span>
+            </button>
+            <input type="file" accept=".json" class="env-file-input" style="display: none;" />
+          </div>
+          <small class="bio-properties-panel-description">
+            ${translate('Load environment.json to add physical places to the modeler')}
+          </small>
+        </div>
+      </div>
+
+      ${hasConfig ? this.renderConfigurationDetails(configSummary) : ''}
+       
+      ${hasConfig ? `
+      <div data-entry-id="env-clear-config" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <button type="button" class="env-clear-config-btn bio-properties-panel-input" 
+                  style="text-align: center; cursor: pointer; color: #d32f2f; border-color: #d32f2f;">
+            ${translate('Clear Configuration')}
+          </button>
+        </div>
+      </div>
+      ` : ''}
+      
+    </div>
+  `;
+
+  this.attachEnvironmentEventListeners(section);
+  return section;
+};
+
+/**
+ * Render configuration details section
+ */
+SpacePropertiesProvider.prototype.renderConfigurationDetails = function(configSummary) {
+  const translate = this._translate;
+  console.log('CONFIG SUMMARY:', configSummary.summary);
+  return `
+    <!-- Configuration Details Entry -->
+    <div data-entry-id="env-config-details" class="bio-properties-panel-entry">
+      <div class="bio-properties-panel-textfield">
+        <label class="bio-properties-panel-label">${translate('Configuration Summary')}</label>
+        <div class="env-config-details">
+          <div class="config-metric">
+            <span class="metric-label">${translate('Places')}:</span>
+            <span class="metric-value">${configSummary.summary.physicalPlaces}</span>
+          </div>
+          <div class="config-metric">
+            <span class="metric-label">${translate('Logical Places')}:</span>
+            <span class="metric-value">${configSummary.summary.logicalPlaces}</span>
+          </div>
+          <div class="config-metric">
+            <span class="metric-label">${translate('Views')}:</span>
+            <span class="metric-value">${configSummary.summary.views}</span>
+          </div>
+          ${configSummary.zones.length > 0 ? `
+          <div class="config-metric">
+            <span class="metric-label">${translate('Zones')}:</span>
+            <span class="metric-value">${configSummary.zones.join(', ')}</span>
+          </div>
+          ` : ''}
+          ${configSummary.purposes.length > 0 ? `
+          <div class="config-metric">
+            <span class="metric-label">${translate('Purposes')}:</span>
+            <span class="metric-value">${configSummary.purposes.join(', ')}</span>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Attach event listeners to environment section
+ */
+SpacePropertiesProvider.prototype.attachEnvironmentEventListeners = function(section) {
+
+  // Toggle section expand/collapse
+  const toggleButton = section.querySelector('.bio-properties-panel-group-header-button');
+  const header = section.querySelector('.bio-properties-panel-group-header');
+  const entries = section.querySelector('.bio-properties-panel-group-entries');
+
+  if (toggleButton && header && entries) {
+    toggleButton.addEventListener('click', () => {
+      const isOpen = header.classList.contains('open');
+
+      if (isOpen) {
+
+        // Close section
+        header.classList.remove('open');
+        entries.classList.remove('open');
+        entries.style.display = 'none';
+
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-down');
+          arrow.classList.add('bio-properties-panel-arrow-right');
+        }
+      } else {
+
+        // Open section
+        header.classList.add('open');
+        entries.classList.add('open');
+        entries.style.display = 'block';
+
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-right');
+          arrow.classList.add('bio-properties-panel-arrow-down');
+        }
+      }
+    });
+  }
+
+  // File input handling
+  const fileButton = section.querySelector('.env-file-load-btn');
+  const fileInput = section.querySelector('.env-file-input');
+
+  if (fileButton && fileInput) {
+    fileButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.handleFileLoad(file, section);
+      }
+    });
+  }
+
+  // Clear configuration button
+  const clearButton = section.querySelector('.env-clear-config-btn');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      this.handleClearConfiguration(section);
+    });
+  }
+};
+
+/**
+ * Handle file loading (manual upload)
+ */
+SpacePropertiesProvider.prototype.handleFileLoad = function(file, section) {
+
+  // Validate file type
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    this.showFileError(section, this._translate('Please select a JSON file'));
+    return;
+  }
+
+  // Show loading state
+  this.showFileLoading(section, file.name);
+
+  // Use environment service to handle the file
+  this._environmentService.handleManualFileLoad(file);
+};
+
+/**
+ * Handle clear configuration
+ */
+SpacePropertiesProvider.prototype.handleClearConfiguration = function(section) {
+
+  // Confirm with user
+  if (confirm(this._translate('Are you sure you want to clear the environment configuration?'))) {
+    this._environmentService.clearConfiguration();
+    this.refreshEnvironmentSection();
+  }
+};
+
+/**
+ * Handle manual load result
+ */
+SpacePropertiesProvider.prototype.handleManualLoadResult = function(event) {
+  const section = document.querySelector('.space-properties-section[data-group-id="group-environment-config"]');
+  if (!section) return;
+
+  if (event.success) {
+    this.refreshEnvironmentSection();
+  } else {
+    this.showFileError(section, event.error || this._translate('Unknown error occurred'));
+  }
+};
+
+/**
+ * Show file loading state
+ */
+SpacePropertiesProvider.prototype.showFileLoading = function(section, fileName) {
+  const button = section.querySelector('.env-file-load-btn');
+  if (button) {
+    button.innerHTML = `
+      <span class="file-text">${this._translate('Loading')} ${fileName}...</span>
+    `;
+    button.disabled = true;
+    button.style.opacity = '0.7';
+  }
+};
+
+/**
+ * Show file success state
+ */
+SpacePropertiesProvider.prototype.showFileSuccess = function(section, fileName) {
+  const button = section.querySelector('.env-file-load-btn');
+  if (button) {
+    button.innerHTML = `
+      <span class="file-text">${this._translate('Loaded')} ${fileName}</span>
+    `;
+    setTimeout(() => {
+      button.disabled = false;
+      button.style.opacity = '1';
+    }, 1500);
+  }
+};
+
+/**
+ * Show file error state
+ */
+SpacePropertiesProvider.prototype.showFileError = function(section, message) {
+  const button = section.querySelector('.env-file-load-btn');
+  if (button) {
+    button.innerHTML = `
+      <span class="file-text">${message}</span>
+    `;
+    button.style.color = '#d32f2f';
+
+    setTimeout(() => {
+      const hasConfig = this._environmentService.hasConfiguration();
+      button.innerHTML = `
+        <span class="file-text">${hasConfig ? this._translate('Load Different File') : this._translate('Load environment.json')}</span>
+      `;
+      button.style.color = '';
+      button.disabled = false;
+      button.style.opacity = '1';
+    }, 3000);
+  }
+};
+
+/**
+ * Refresh environment section
+ */
+SpacePropertiesProvider.prototype.refreshEnvironmentSection = function() {
+
+  // Check if we're currently showing an environment section
+  const existingSection = document.querySelector('.space-properties-section[data-group-id="group-environment-config"]');
+  if (existingSection) {
+
+    // Force refresh by removing and recreating
+    existingSection.remove();
+    this.showEnvironmentSection();
+  }
+};
+
+// Keep all existing task-related methods unchanged from the original SpacePropertiesProvider
+SpacePropertiesProvider.prototype.hideSpaceSection = function() {
+  const existingSection = document.querySelector('.space-properties-section');
+  if (existingSection) {
+    existingSection.remove();
+  }
+};
+
+SpacePropertiesProvider.prototype.createStandaloneSpaceSection = function(element) {
+  const propertiesPanel = document.querySelector('.bio-properties-panel-scroll-container');
+  if (!propertiesPanel) {
+    return;
+  }
+
+  // Remove existing space section if present
+  const existingSection = propertiesPanel.querySelector('.space-properties-section');
+  if (existingSection) {
+    existingSection.remove();
+  }
+
+  // Create the standalone space section
+  const spaceSection = this.createSpaceSection(element);
+
+  // Insert after General section (usually the first section)
+  const generalSection = propertiesPanel.querySelector('[data-group-id*="general"]');
+  if (generalSection && generalSection.nextSibling) {
+    propertiesPanel.insertBefore(spaceSection, generalSection.nextSibling);
+  } else {
+
+    // Fallback: add at the beginning
+    propertiesPanel.insertBefore(spaceSection, propertiesPanel.firstChild);
+  }
+};
+
+// FIXED: Removed the double 'S' typo here
+SpacePropertiesProvider.prototype.createSpaceSection = function(element) {
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-space-properties');
+
+  const currentType = this._extensionService.getCurrentType(element);
+  const translate = this._translate;
+
+  // NEW: Get assignment count for badge
+  const assignmentCount = this._assignmentService.getAssignmentCount(element);
+
+  const isExpanded = !!currentType;
+  const hasData = !!currentType;
+
+  section.innerHTML = `
+    <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasData ? '' : 'empty'}">
+      <div title="Space Properties" 
+           data-title="Space Properties" 
+           class="bio-properties-panel-group-header-title">
+          Space Properties
+          ${assignmentCount > 0 ? `<span class="assignment-count-badge">${assignmentCount}</span>` : ''}
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        ${hasData ? '<div title="Section contains data" class="bio-properties-panel-dot"></div>' : ''}
+        <button type="button" 
+                title="Toggle section" 
+                class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+      
+      <!-- Task Type Entry -->
+      <div data-entry-id="space-task-type" class="bio-properties-panel-entry">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-type-select" class="bio-properties-panel-label">Type</label>
+          <select id="space-type-select" 
+                  name="spaceType" 
+                  class="bio-properties-panel-input space-type-select">
+            <option value="">(None)</option>
+            ${getAllTaskTypes().map(config =>
+    `<option value="${config.key}" ${config.key === currentType ? 'selected' : ''}>${translate(config.typeValue)}</option>`
+  ).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Destination Entry (for Movement) -->
+      <div data-entry-id="space-destination" 
+           class="bio-properties-panel-entry space-destination-entry" 
+           style="${currentType !== 'movement' ? 'display: none;' : ''}">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-destination-input" class="bio-properties-panel-label">Destination</label>
+          <input id="space-destination-input" 
+                 type="text" 
+                 name="spaceDestination" 
+                 spellcheck="false" 
+                 autocomplete="off" 
+                 class="bio-properties-panel-input space-destination-input"
+                 placeholder="${translate('Enter destination')}"
+                 value="${this._extensionService.getDestination(element) || ''}" />
+        </div>
+        ${this.renderDestinationAttributes(element)}
+      </div>
+
+      <!-- Binding Entry (for Bind) -->
+      <div data-entry-id="space-binding" 
+           class="bio-properties-panel-entry space-binding-entry" 
+           style="${currentType !== 'binding' ? 'display: none;' : ''}">
+      </div>
+      
+      <!-- NEW: Task Assignments Section (shown for all task types) -->
+      ${currentType ? this.renderTaskAssignments(element) : ''}
+      
+    </div>
+  `;
+
+  this.attachSectionEventListeners(section, element);
+
+  return section;
+};
+
+// Replace the renderTaskAssignments method in SpacePropertiesProvider
+// with this native Camunda-styled version
+
+SpacePropertiesProvider.prototype.renderTaskAssignments = function(element) {
+  const translate = this._translate;
+  const assignments = this._assignmentService.getAssignments(element);
+  const assignmentCount = assignments.length;
+
+  // Generate assignment items using native collapsible structure
+  const assignmentItems = assignments.map((assignment, index) => {
+    // Create a short title for the collapsed header
+    const title = assignment.condition 
+      ? `Assignment ${index + 1}: ${assignment.condition.substring(0, 20)}${assignment.condition.length > 20 ? '...' : ''}`
+      : `Assignment ${index + 1}`;
+    
+    return `
+    <div class="bio-properties-panel-list-item assignment-list-item">
+      <div data-entry-id="assignment-${index}" class="bio-properties-panel-collapsible-entry assignment-collapsible-entry open">
+        <div class="bio-properties-panel-collapsible-entry-header assignment-collapsible-header">
+          <div title="${this.escapeHtml(title)}" class="bio-properties-panel-collapsible-entry-header-title assignment-collapsible-title">
+            ${this.escapeHtml(title)}
+          </div>
+          <button type="button" 
+                  title="${translate('Toggle list item')}" 
+                  class="bio-properties-panel-arrow bio-properties-panel-collapsible-entry-arrow btn-toggle-assignment"
+                  data-index="${index}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bio-properties-panel-arrow-down">
+              <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+            </svg>
+          </button>
+          <button type="button" 
+                  title="${translate('Delete item')}" 
+                  class="bio-properties-panel-remove-entry btn-remove-assignment"
+                  data-index="${index}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+              <path fill-rule="evenodd" d="M12 6v7c0 1.1-.4 1.55-1.5 1.55h-5C4.4 14.55 4 14.1 4 13V6h8Zm-1.5 1.5h-5v4.3c0 .66.5 1.2 1.111 1.2H9.39c.611 0 1.111-.54 1.111-1.2V7.5ZM13 3h-2l-1-1H6L5 3H3v1.5h10V3Z"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="bio-properties-panel-collapsible-entry-entries assignment-collapsible-entries open">
+          <!-- Starting Condition Field -->
+          <div data-entry-id="assignment-${index}-condition" class="bio-properties-panel-entry assignment-field">
+            <div class="bio-properties-panel-textfield">
+              <label for="assignment-${index}-condition" class="bio-properties-panel-label">
+                ${translate('Starting Condition')}
+              </label>
+              <input id="assignment-${index}-condition"
+                     type="text" 
+                     name="assignment-${index}-condition"
+                     spellcheck="false"
+                     autocomplete="off"
+                     class="bio-properties-panel-input assignment-condition" 
+                     data-index="${index}"
+                     placeholder="${translate('e.g., place1.temperature > 25')}"
+                     value="${this.escapeHtml(assignment.condition || '')}" />
+            </div>
+            <div class="bio-properties-panel-description">
+              ${translate('Condition that triggers this assignment')}
+            </div>
+          </div>
+          
+          <!-- Value to Assign Field -->
+          <div data-entry-id="assignment-${index}-value" class="bio-properties-panel-entry assignment-field">
+            <div class="bio-properties-panel-textfield">
+              <label for="assignment-${index}-value" class="bio-properties-panel-label">
+                ${translate('Value to Assign')}
+              </label>
+              <input id="assignment-${index}-value"
+                     type="text" 
+                     name="assignment-${index}-value"
+                     spellcheck="false"
+                     autocomplete="off"
+                     class="bio-properties-panel-input assignment-value" 
+                     data-index="${index}"
+                     placeholder="${translate('e.g., place1.light = off')}"
+                     value="${this.escapeHtml(assignment.value || '')}" />
+            </div>
+            <div class="bio-properties-panel-description">
+              ${translate('New value to set when condition is met')}
+            </div>
+          </div>
+          
+          <!-- Validation Message (if needed) -->
+          <div class="assignment-validation" style="display: none;">
+            <span class="validation-message"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+
+  // Return the complete assignments section HTML
+  return `
+    <!-- Task Assignments Entry -->
+    <div data-entry-id="space-assignments" class="bio-properties-panel-entry space-assignments-entry">
+      <div class="bio-properties-panel-assignments">
+        <div class="assignments-header">
+          <label class="bio-properties-panel-label">${translate('Task Assignments')}</label>
+          <button type="button" 
+                  title="${translate('Create new list item')}" 
+                  class="bio-properties-panel-group-header-button bio-properties-panel-add-entry btn-add-assignment">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+              <path fill-rule="evenodd" d="M9 13V9h4a1 1 0 0 0 0-2H9V3a1 1 0 1 0-2 0v4H3a1 1 0 1 0 0 2h4v4a1 1 0 0 0 2 0Z"></path>
+            </svg>
+          </button>
+          ${assignmentCount > 0 ? `
+          <div title="${translate('List contains')} ${assignmentCount} ${assignmentCount === 1 ? translate('item') : translate('items')}" 
+               class="bio-properties-panel-list-badge assignments-list-badge">
+            ${assignmentCount}
+          </div>
+          ` : ''}
+        </div>
+        
+        ${assignmentCount === 0 ? `
+        <div class="no-assignments"></div>
+        ` : `
+        <div class="bio-properties-panel-list assignments-list open">
+          ${assignmentItems}
+        </div>
+        `}
+      </div>
+    </div>
+  `;
+};
+
+SpacePropertiesProvider.prototype.renderDestinationAttributes = function(element) {
+  const destination = this._extensionService.getDestination(element);
+  const hasEnvironment = this._environmentService.hasConfiguration();
+  const translate = this._translate;
+
+  if (!hasEnvironment || !destination) {
+    return '';
+  }
+
+  const place = this._environmentService.findPlaceById(destination);
+  if (!place) {
+    return `
+      <div class="destination-attributes destination-not-found">
+        <small class="bio-properties-panel-description">
+          <span style="color: #f57c00;">${translate('Destination not found in environment')}</span>
+        </small>
+      </div>
+    `;
+  }
+
+  // Render place attributes
+  const attributes = place.attributes || {};
+  const attributeKeys = Object.keys(attributes);
+
+  if (attributeKeys.length === 0) {
+    return `
+      <div class="destination-attributes destination-no-attributes">
+        <small class="bio-properties-panel-description">
+          <span style="color: #666;">${translate('No attributes available for this destination')}</span>
+        </small>
+      </div>
+    `;
+  }
+
+  // Generate attributes HTML
+  const attributesHtml = attributeKeys.map(key => {
+    const value = attributes[key];
+    let displayValue = value;
+    let valueClass = 'attribute-value';
+
+    // Special formatting for certain attribute types
+    if (key === 'freeSeats') {
+      if (value === 0) {
+        displayValue = `${value} (${translate('Full')})`;
+        valueClass = 'attribute-value attribute-value-warning';
+      } else if (value > 0) {
+        displayValue = `${value} ${translate('available')}`;
+        valueClass = 'attribute-value attribute-value-success';
+      }
+    } else if (key === 'zone') {
+      valueClass = 'attribute-value attribute-value-zone';
+      displayValue = `Zone ${value}`;
+    } else if (key === 'purpose') {
+      valueClass = 'attribute-value attribute-value-purpose';
+      displayValue = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    return `
+      <div class="attribute-item">
+        <span class="attribute-key">${translate(key)}:</span>
+        <span class="${valueClass}">${displayValue}</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="destination-attributes destination-found">
+      <small class="bio-properties-panel-description">
+        <span>${translate('Destination attributes')}</span>
+      </small>
+      <div class="attributes-header">
+      </div>
+      <div class="attributes-content">
+        ${attributesHtml}
+      </div>
+    </div>
+  `;
+};
+
+SpacePropertiesProvider.prototype.attachSectionEventListeners = function(section, element) {
+
+  // Toggle section expand/collapse
+  const toggleButton = section.querySelector('.bio-properties-panel-group-header-button');
+  const header = section.querySelector('.bio-properties-panel-group-header');
+  const entries = section.querySelector('.bio-properties-panel-group-entries');
+
+  if (toggleButton && header && entries) {
+    toggleButton.addEventListener('click', () => {
+      const isOpen = header.classList.contains('open');
+
+      if (isOpen) {
+
+        // Close section
+        header.classList.remove('open');
+        entries.classList.remove('open');
+        entries.style.display = 'none';
+
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-down');
+          arrow.classList.add('bio-properties-panel-arrow-right');
+        }
+      } else {
+
+        // Open section
+        header.classList.add('open');
+        entries.classList.add('open');
+        entries.style.display = 'block';
+
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-right');
+          arrow.classList.add('bio-properties-panel-arrow-down');
+        }
+      }
+    });
+  }
+
+  // Form field event listeners
+  const typeSelect = section.querySelector('.space-type-select');
+  const destinationInput = section.querySelector('.space-destination-input');
+  const bindingInput = section.querySelector('.space-binding-input');
+
+  // Type selection
+  if (typeSelect) {
+    typeSelect.addEventListener('change', (e) => {
+      try {
+        const newType = e.target.value;
+
+        if (newType) {
+          this._taskTypeService.setTaskType(element, newType);
+        } else {
+          this._taskTypeService.clearTaskType(element);
+        }
+
+        // Update immediately
+        this.updateFieldVisibility(section, newType);
+        this.updateSectionIndicators(section, element);
+
+      } catch (error) {
+        console.error('Error changing type:', error);
+      }
+    });
+  }
+
+  // Destination input - save on change AND refresh attributes
+  if (destinationInput) {
+    [ 'input', 'blur', 'change' ].forEach(eventType => {
+      destinationInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+          if (value) {
+            this._extensionService.setExtension(element, 'space:Destination', value);
+          }
+
+          this.updateSectionIndicators(section, element);
+          this.updateDestinationAttributes(section, element);
+
+        } catch (error) {
+          console.error('Error saving destination:', error);
+        }
+      });
+    });
+  }
+
+  // Binding input - save on change
+  if (bindingInput) {
+    [ 'input', 'blur', 'change' ].forEach(eventType => {
+      bindingInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+          if (value) {
+            this._extensionService.setExtension(element, 'space:Binding', value);
+          }
+
+          this.updateSectionIndicators(section, element);
+
+        } catch (error) {
+          console.error('Error saving binding:', error);
+        }
+      });
+    });
+  }
+
+  this.attachAssignmentListeners(section, element);
+};
+
+SpacePropertiesProvider.prototype.attachAssignmentListeners = function(section, element) {
+  const translate = this._translate;
+
+  const addButton = section.querySelector('.btn-add-assignment');
+  if (addButton) {
+    addButton.addEventListener('click', () => {
+      this._assignmentService.addAssignment(element, ' ', ' ');
+      this.refreshAssignmentsSection(section, element);
+
+      setTimeout(() => {
+        const newAssignments = section.querySelectorAll('.assignment-item');
+        const lastAssignment = newAssignments[newAssignments.length - 1];
+        const conditionInput = lastAssignment?.querySelector('.assignment-condition');
+        if (conditionInput) {
+          conditionInput.focus();
+        }
+      }, 100);
+    });
+  }
+
+  section.querySelectorAll('.btn-remove-assignment').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.currentTarget.getAttribute('data-index'));
+
+      const assignments = this._assignmentService.getAssignments(element);
+      const assignment = assignments[index];
+
+      this._assignmentService.removeAssignment(element, index);
+      this.refreshAssignmentsSection(section, element);
+      this.updateSectionIndicators(section, element);
+    });
+  });
+
+  section.querySelectorAll('.assignment-condition').forEach(input => {
+    const index = parseInt(input.getAttribute('data-index'));
+
+    [ 'blur', 'change' ].forEach(eventType => {
+      input.addEventListener(eventType, (e) => {
+        const assignments = this._assignmentService.getAssignments(element);
+        const assignment = assignments[index];
+        if (assignment) {
+          this._assignmentService.updateAssignment(
+            element,
+            index,
+            e.target.value.trim(),
+            assignment.value
+          );
+          // this.validateAssignmentField(input, e.target.value.trim(), 'condition');
+        }
+      });
+    });
+
+    // input.addEventListener('input', (e) => {
+    //   this.validateAssignmentField(input, e.target.value.trim(), 'condition');
+    // });
+  });
+
+  section.querySelectorAll('.assignment-value').forEach(input => {
+    const index = parseInt(input.getAttribute('data-index'));
+
+    [ 'blur', 'change' ].forEach(eventType => {
+      input.addEventListener(eventType, (e) => {
+        const assignments = this._assignmentService.getAssignments(element);
+        const assignment = assignments[index];
+        if (assignment) {
+          this._assignmentService.updateAssignment(
+            element,
+            index,
+            assignment.condition,
+            e.target.value.trim()
+          );
+          // this.validateAssignmentField(input, e.target.value.trim(), 'value');
+        }
+      });
+    });
+
+    // input.addEventListener('input', (e) => {
+    //   this.validateAssignmentField(input, e.target.value.trim(), 'value');
+    // });
+  });
+};
+
+SpacePropertiesProvider.prototype.refreshAssignmentsSection = function(section, element) {
+  const assignmentsEntry = section.querySelector('.space-assignments-entry');
+  if (!assignmentsEntry) return;
+
+  // Get the fresh HTML for assignments
+  const newAssignmentsHTML = this.renderTaskAssignments(element);
+
+  // Create a temporary container to parse the HTML
+  const temp = document.createElement('div');
+  temp.innerHTML = newAssignmentsHTML;
+
+  // Find the actual content inside the wrapper
+  const newContent = temp.querySelector('.bio-properties-panel-assignments');
+
+  // Find the existing container and replace its content
+  const existingContainer = assignmentsEntry.querySelector('.bio-properties-panel-assignments');
+  if (existingContainer && newContent) {
+    existingContainer.innerHTML = newContent.innerHTML;
+  } else {
+
+    // Fallback: replace entire content
+    assignmentsEntry.innerHTML = newAssignmentsHTML;
+  }
+
+  // Re-attach event listeners
+  this.attachAssignmentListeners(section, element);
+
+  // Update the section indicators to refresh the badge count
+  this.updateSectionIndicators(section, element);
+};
+
+// SpacePropertiesProvider.prototype.validateAssignmentField = function(input, value, type) {
+//   const assignmentItem = input.closest('.assignment-item');
+//   const validationDiv = assignmentItem?.querySelector('.assignment-validation');
+//   const validationMessage = validationDiv?.querySelector('.validation-message');
+
+//   if (!validationDiv || !validationMessage) return;
+
+//   if (value && !value.match(/^[^.]+\.[^=<>!]+\s*[=<>!]+\s*.+$/)) {
+//     validationDiv.style.display = 'block';
+//     validationMessage.textContent = type === 'condition'
+//       ? 'Format: place.attribute operator value'
+//       : 'Format: place.attribute = value';
+//     validationMessage.style.color = '#ef6c00';
+//     input.style.borderColor = '#ffb74d';
+//   } else {
+//     validationDiv.style.display = 'none';
+//     input.style.borderColor = '';
+//   }
+// };
+
+// NEW: Escape HTML helper
+SpacePropertiesProvider.prototype.escapeHtml = function(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+};
+
+SpacePropertiesProvider.prototype.updateDestinationAttributes = function(section, element) {
+  const destinationEntry = section.querySelector('.space-destination-entry');
+  if (!destinationEntry) return;
+
+  // Remove existing attributes
+  const existingAttributes = destinationEntry.querySelector('.destination-attributes');
+  if (existingAttributes) {
+    existingAttributes.remove();
+  }
+
+  // Add attributes
+  const attributesHtml = this.renderDestinationAttributes(element);
+  if (attributesHtml) {
+    const textField = destinationEntry.querySelector('.bio-properties-panel-textfield');
+    textField.insertAdjacentHTML('beforeend', attributesHtml);
+  }
+};
+
+SpacePropertiesProvider.prototype.updateFieldVisibility = function(section, selectedType) {
+  const destinationEntry = section.querySelector('.space-destination-entry');
+  const bindingEntry = section.querySelector('.space-binding-entry');
+  const unbindingEntry = section.querySelector('.space-unbinding-entry');
+
+  if (destinationEntry) {
+    destinationEntry.style.display = selectedType === TASK_TYPE_KEYS.MOVEMENT ? 'block' : 'none';
+  }
+  if (bindingEntry) {
+    bindingEntry.style.display = selectedType === TASK_TYPE_KEYS.BINDING ? 'block' : 'none';
+  }
+  if (unbindingEntry) {
+    unbindingEntry.style.display = selectedType === TASK_TYPE_KEYS.UNBINDING ? 'block' : 'none';
+  }
+  const assignmentsEntry = section.querySelector('.space-assignments-entry');
+  if (assignmentsEntry) {
+    assignmentsEntry.style.display = selectedType ? 'block' : 'none';
+  }
+};
+
+SpacePropertiesProvider.prototype.getStatusText = function(element, currentType) {
+  const translate = this._translate;
+
+  if (!currentType) {
+    return `<strong>${translate('Status')}:</strong> ${translate('No configuration')} <br><em>${translate('Select a type to configure this task')}</em>`;
+  }
+
+  const config = getTaskConfig(currentType);
+  let status = `<strong>${translate('Status')}:</strong> ${config.typeValue} ${translate('configured')}`;
+
+  if (currentType === TASK_TYPE_KEYS.MOVEMENT) {
+    const destination = this._extensionService.getDestination(element);
+    status += `<br><strong>${translate('Destination')}:</strong> ${destination || `<em>${translate('(required)')}</em>`}`;
+  } else if (currentType === TASK_TYPE_KEYS.BINDING) {
+    const binding = this._extensionService.getBinding(element);
+    status += `<br><strong>${translate('Participant')}:</strong> ${binding || `<em>${translate('(required)')}</em>`}`;
+  } else if (currentType === TASK_TYPE_KEYS.UNBINDING) {
+    status += `<br><em>${translate('Ready to release bound participants')}</em>`;
+  }
+
+  return status;
+};
+
+SpacePropertiesProvider.prototype.updateSectionIndicators = function(section, element) {
+  const header = section.querySelector('.bio-properties-panel-group-header');
+  const statusDisplay = section.querySelector('.space-status-display');
+
+  const currentType = this._extensionService.getCurrentType(element);
+  const hasData = !!currentType;
+
+  const assignmentCount = this._assignmentService.getAssignmentCount(element);
+  const titleDiv = header.querySelector('.bio-properties-panel-group-header-title');
+
+  if (titleDiv) {
+    let badge = titleDiv.querySelector('.assignment-count-badge');
+    if (assignmentCount > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'assignment-count-badge';
+        titleDiv.appendChild(badge);
+      }
+      badge.textContent = assignmentCount;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  // Update header class and dot indicator
+  if (hasData) {
+    header.classList.remove('empty');
+
+    // Add data dot if not present
+    let dot = header.querySelector('.bio-properties-panel-dot');
+    if (!dot) {
+      dot = document.createElement('div');
+      dot.className = 'bio-properties-panel-dot';
+      dot.title = 'Section contains data';
+
+      const buttonsContainer = header.querySelector('.bio-properties-panel-group-header-buttons');
+      if (buttonsContainer) {
+        buttonsContainer.insertBefore(dot, buttonsContainer.firstChild);
+      }
+    }
+  } else {
+    header.classList.add('empty');
+
+    // Remove data dot
+    const dot = header.querySelector('.bio-properties-panel-dot');
+    if (dot) {
+      dot.remove();
+    }
+  }
+
+  // Update status display
+  if (statusDisplay) {
+    statusDisplay.innerHTML = this.getStatusText(element, currentType);
+    statusDisplay.style.background = currentType ? '#e8f5e8' : '#f0f0f0';
+    statusDisplay.style.color = currentType ? '#2e7d32' : '#666';
+    statusDisplay.style.borderLeftColor = currentType ? '#4caf50' : '#ccc';
+  }
+};
+
+SpacePropertiesProvider.prototype.refreshSpaceSection = function(element) {
+  const existingSection = document.querySelector('.space-properties-section');
+  if (existingSection && element) {
+
+    // Update form fields with current XML values
+    const currentType = this._extensionService.getCurrentType(element);
+    const currentDestination = this._extensionService.getDestination(element);
+    const currentBinding = this._extensionService.getBinding(element);
+
+    const typeSelect = existingSection.querySelector('.space-type-select');
+    const destinationInput = existingSection.querySelector('.space-destination-input');
+    const bindingInput = existingSection.querySelector('.space-binding-input');
+
+    if (typeSelect) typeSelect.value = currentType || '';
+    if (destinationInput) destinationInput.value = currentDestination || '';
+    if (bindingInput) bindingInput.value = currentBinding || '';
+
+    // Update visibility and indicators
+    this.updateFieldVisibility(existingSection, currentType);
+    this.updateSectionIndicators(existingSection, element);
+
+    this.updateDestinationAttributes(existingSection, element);
+
+    if (currentType) {
+      this.refreshAssignmentsSection(existingSection, element);
+    }
+  }
+};
+
+export default {
+  __init__: [ 'spacePropertiesProvider' ],
+  spacePropertiesProvider: [ 'type', SpacePropertiesProvider ]
+};
