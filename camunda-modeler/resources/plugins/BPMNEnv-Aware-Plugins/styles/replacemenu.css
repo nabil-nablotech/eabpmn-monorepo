@@ -29,37 +29,19 @@
 /* Movement task icon */
 .djs-popup .entry[data-id="replace-with-movement"] .bpmn-icon-task::before,
 .djs-popup .bpmn-icon-task.space-task-movement::before {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background: url("../icons/customTask/movement.svg") no-repeat center / contain;
-  vertical-align: middle;
-  margin-right: 8px;
+  display: none;
 }
 
 /* Binding task icon */
 .djs-popup .entry[data-id="replace-with-binding"] .bpmn-icon-task::before,
 .djs-popup .bpmn-icon-task.space-task-binding::before {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background: url("../icons/customTask/binding.svg") no-repeat center / contain;
-  vertical-align: middle;
-  margin-right: 8px;
+  display: none;
 }
 
 /* Unbinding task icon */
 .djs-popup .entry[data-id="replace-with-unbinding"] .bpmn-icon-task::before,
 .djs-popup .bpmn-icon-task.space-task-unbinding::before {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background: url("../icons/customTask/unbinding.svg") no-repeat center / contain;
-  vertical-align: middle;
-  margin-right: 8px;
+  display: none;
 }
 
 /* Highlight current type (optional) */
@@ -135,6 +117,5 @@
 .djs-popup .entry[data-id^="replace-with-"] img {
   width: 20px;
   height: 20px;
-  margin-right: 8px;
   vertical-align: middle;
 }
