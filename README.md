@@ -13,7 +13,7 @@ eabpmn-monorepo/
 │   ├── app/                  # Electron app
 │   └── client/              # React client
 ├── bpenv-modeler/           # BPENV Modeler library (React components)
-├── camnuda-bpmn-engine/     # Java BPMN engine
+├── camunda-bpmn-engine/     # Java BPMN engine
 └── docker-compose.yml       # Keycloak & PostgreSQL setup
 
 ```
@@ -56,9 +56,16 @@ This will:
 #### Java BPMN Engine
 
 ```bash
-cd camnuda-bpmn-engine
+cd camunda-bpmn-engine
 mvn clean install
+mvn spring-boot:run
 ```
+
+**Access (after starting):**
+- **Camunda Cockpit:** http://localhost:8082/camunda
+- **GPS Tracker:** http://localhost:8082/gps.html
+
+For login users and how to start the GPS process, see [camunda-bpmn-engine/README.md](camunda-bpmn-engine/README.md).
 
 ## 🛠️ Development
 
@@ -152,7 +159,7 @@ Custom Camunda Modeler plugin that extends BPMN modeling with:
 
 Spring Boot application for executing environment-aware BPMN processes.
 
-**Location:** `camnuda-bpmn-engine/`
+**Location:** `camunda-bpmn-engine/`
 
 ## 🐳 Docker Services
 

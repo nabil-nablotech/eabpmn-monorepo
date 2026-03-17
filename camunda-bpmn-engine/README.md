@@ -1,17 +1,19 @@
-# Camunda Location-Aware Workflow System
-GPS-tracked workflows with WebSocket real-time tracking and geofencing.
+# Camunda BPMN Engine
 
-## Quick Start
-```
+Location-aware workflow system: GPS-tracked workflows with WebSocket real-time tracking and geofencing.
+
+## Setup & Start
+
+```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-**Access:**
-- Camunda: http://localhost:8082/camunda
-- GPS Tracker: http://localhost:8082/gps.html
+**Access (after starting):**
+- **Camunda Cockpit:** http://localhost:8082/camunda
+- **GPS Tracker:** http://localhost:8082/gps.html
 
- ## How to Login
+## Login
 
 **Available Users:**
 
@@ -21,7 +23,7 @@ mvn spring-boot:run
 | `lmozzoni` | `a` | Tutor | luca.mozzoni@unicam.it |
 | `a` | `a` | Admin | - |
 
-## How to Start the GPS Process
+## Start the GPS Process
 
 ### 1. Open Camunda Cockpit
 - Go to: http://localhost:8082/camunda
@@ -30,29 +32,12 @@ mvn spring-boot:run
 ### 2. Start Process Instance
 1. Click **Cockpit** → **Processes**
 2. Deploy from Camunda Modeler
-4. Click **Start Instance**
-5. Start processes with same Business Key
+3. Click **Start Instance**
+4. Start processes with same Business Key
 
-How to Simulate Coordinate Sending
-1. Open GPS Tracker
-
-Go to: http://localhost:8082/gps.html
-
-2. Connect to Process
-
-User ID: nkhelifa (matches participantId)
-Business Key: defined bk (matches process businessKey)
-Click Connect
-
-3. Send Location (Manual)
-Set coordinates for a specific place
-
-4. Send Location (Automatic)
-
-Click Start Tracking
-Server polls every 5 seconds
-Use Randomize buttons to simulate movement
-Click Stop Tracking when done
-
-
+### 3. Simulate Coordinate Sending (GPS Tracker)
+1. Open **GPS Tracker:** http://localhost:8082/gps.html
+2. **Connect to process:** User ID `nkhelifa` (matches participantId), Business Key (matches process businessKey), then **Connect**
+3. **Send location (manual):** Set coordinates for a specific place
+4. **Send location (automatic):** Click **Start Tracking** (server polls every 5s), use **Randomize** to simulate movement, **Stop Tracking** when done
 
