@@ -119,7 +119,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=development webpack --watch --config ./webpack.config.js",
     "build": "cross-env NODE_ENV=production webpack",
-    "postbuild": "del-cli --force ../app/public && mv build ../app/public",
+    "postbuild": "del-cli --force ../app/public && move build ../app/public",
     "dev": "run-s start",
     "auto-test": "npm test -- --auto-watch --no-single-run",
     "test": "karma start karma.config.js",

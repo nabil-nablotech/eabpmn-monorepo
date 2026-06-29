@@ -74,7 +74,7 @@ const PhysicalAttributes = ({ elementId, type, initialAttributes }: {
     <div className="mt-2 ms-3">
       {Object.entries(attributes).map(([key, value], index) => {
         return (
-          <div key={index} className="d-flex mb-1 align-items-center gap-1">
+          <div key={index} className="d-flex mb-1 align-items-center gap-3">
             <input
               className="form-control form-control-md border-0 bg-transparent text-white p-0 custom-placeholder no-focus-outline"
               value={tempKeys[key] ?? key}
@@ -94,7 +94,8 @@ const PhysicalAttributes = ({ elementId, type, initialAttributes }: {
               spellCheck={false}
             />
             <button
-              className="btn btn-sm btn-outline-danger p-1"
+              className="btn btn-sm btn-outline-danger btn-sm px-2"
+              style={{ minWidth: "30px" }}
               onClick={() => handleRemoveAttribute(key)}
               title="Remove"
               hidden={!isEditable}

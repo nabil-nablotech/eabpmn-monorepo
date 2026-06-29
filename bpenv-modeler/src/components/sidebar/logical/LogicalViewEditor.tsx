@@ -166,7 +166,7 @@ const LogicalViewEditor = ({
             </div>
           ))}
 
-          <button className="btn btn-sm btn-outline-light w-100 mt-2" onClick={addAggregation}>
+          <button className="btn btn-sm btn-outline-dark w-100 mt-2" onClick={addAggregation}>
             Add Aggregation
           </button>
         </div>
@@ -183,7 +183,7 @@ const LogicalViewEditor = ({
               onChange={() => handleCheckboxChange(lp.id)}
               id={`lp-${lp.id}`}
             />
-            <label className="form-check-label" htmlFor={`lp-${lp.id}`}>
+            <label className="form-check-label text-dark" htmlFor={`lp-${lp.id}`}>
               {lp.name}
             </label>
           </div>

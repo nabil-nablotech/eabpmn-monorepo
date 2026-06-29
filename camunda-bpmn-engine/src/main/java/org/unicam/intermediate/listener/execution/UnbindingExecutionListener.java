@@ -4,22 +4,22 @@ package org.unicam.intermediate.listener.execution;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
+import org.camunda.bpm.model.bpmn.instance.Task;
+import org.camunda.bpm.model.xml.instance.DomElement;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.stereotype.Component;
-import org.unicam.intermediate.models.WaitingBinding;
-import org.unicam.intermediate.models.enums.TaskType;
-import org.unicam.intermediate.models.pojo.Place;
+import org.unicam.intermediate.models.Participant;
 import org.unicam.intermediate.service.MessageFlowRegistry;
 import org.unicam.intermediate.service.MessageFlowRegistry.MessageFlowBinding;
-import org.unicam.intermediate.service.environmental.BindingService;
-import org.unicam.intermediate.service.environmental.ProximityService;
 import org.unicam.intermediate.service.participant.ParticipantService;
+import org.unicam.intermediate.service.participant.UserParticipantMappingService;
+import org.unicam.intermediate.service.environmental.unbinding.UnbindingTaskRegistry;
 
-import java.time.Instant;
-import java.util.Optional;
-
+import static org.unicam.intermediate.utils.Constants.SPACE_NS;
 import static org.unicam.intermediate.utils.Constants.unbindingExecutionListenerBeanName;
 
 @Slf4j
@@ -27,11 +27,14 @@ import static org.unicam.intermediate.utils.Constants.unbindingExecutionListener
 @AllArgsConstructor
 public class UnbindingExecutionListener implements ExecutionListener {
 
-    private final BindingService bindingService;
-    private final RuntimeService runtimeService;
+    private static final String TIMER_LOCAL_NAME = "timer";
+    private static final String BPMN_ERROR_CODE_VAR = "__spaceBpmnErrorCode";
+    private static final String BPMN_ERROR_MESSAGE_VAR = "__spaceBpmnErrorMessage";
+
+    private final UnbindingTaskRegistry unbindingTaskRegistry;
     private final MessageFlowRegistry messageFlowRegistry;
     private final ParticipantService participantService;
-    private final ProximityService proximityService;
+    private final UserParticipantMappingService userParticipantMapping;
 
     @Override
     public void notify(DelegateExecution execution) {
@@ -46,181 +49,64 @@ public class UnbindingExecutionListener implements ExecutionListener {
         String processDefinitionId = execution.getProcessDefinitionId();
         String activityId = execution.getCurrentActivityId();
         String businessKey = execution.getBusinessKey();
-        String activityName = execution.getCurrentActivityName();
+        Double timerValue = extractTimerValue(execution);
 
         // Get message flow unbinding info
         MessageFlowBinding flowBinding = messageFlowRegistry.getFlowBinding(processDefinitionId, activityId);
-
         if (flowBinding == null) {
-            // For unbinding tasks without explicit message flow, try to resolve from context
-            log.warn("[UNBINDING] No message flow found for task: {}. Attempting to resolve from context.", activityId);
-            handleUnbindingWithoutFlow(execution);
+            log.error("[UNBINDING] No message flow found for task: {} in process: {}", activityId, processDefinitionId);
             return;
         }
-
-        // Determine participants from flow
-        String currentParticipantRef = activityId.equals(flowBinding.getSourceTaskRef())
-                ? flowBinding.getSourceParticipantRef()
-                : flowBinding.getTargetParticipantRef();
 
         String targetParticipantRef = activityId.equals(flowBinding.getSourceTaskRef())
                 ? flowBinding.getTargetParticipantRef()
                 : flowBinding.getSourceParticipantRef();
 
-        log.info("[UNBINDING] Task {} started - Participant {} requesting unbind from {}",
-                activityId, currentParticipantRef, targetParticipantRef);
+        Participant currentParticipant = participantService.resolveCurrentParticipant(execution);
+        Participant targetParticipant = participantService.resolveTargetParticipant(execution, targetParticipantRef);
 
-        // Check if the other participant is already waiting to unbind
-        Optional<WaitingBinding> waitingUnbinding = bindingService.findWaitingUnbinding(
-                businessKey, currentParticipantRef);
-
-        if (waitingUnbinding.isPresent()) {
-            WaitingBinding match = waitingUnbinding.get();
-
-            // Check if both participants are in the same place for safe unbinding
-            Place unbindingPlace = proximityService.getBindingPlace(
-                    currentParticipantRef, match.getCurrentParticipantId());
-
-            if (unbindingPlace != null) {
-                log.info("[UNBINDING] SUCCESS - Both participants in same place: {} ({}). Safe to unbind.",
-                        unbindingPlace.getId(), unbindingPlace.getName());
-
-                // Store unbinding location and timestamp
-                execution.setVariable("unbindingPlaceId", unbindingPlace.getId());
-                execution.setVariable("unbindingPlaceName", unbindingPlace.getName());
-                execution.setVariable("unbindingTimestamp", Instant.now().toString());
-
-                // Clear any binding variables from earlier
-                execution.removeVariable("bindingPlaceId");
-                execution.removeVariable("bindingPlaceName");
-
-                // Remove from waiting and signal both processes
-                bindingService.removeWaitingUnbinding(businessKey, currentParticipantRef);
-                runtimeService.signal(match.getExecutionId());
-
-                // Mark this execution as completed
-                execution.setVariable("unbindingCompleted_" + activityId, true);
-
-                log.info("[UNBINDING] COMPLETED - Participants {} and {} successfully unbound at {}",
-                        currentParticipantRef, match.getCurrentParticipantId(), unbindingPlace.getName());
-
-            } else {
-                // Both want to unbind but not in same place
-                ProximityService.BindingReadiness readiness = proximityService.checkBindingReadiness(
-                        currentParticipantRef, match.getCurrentParticipantId());
-
-                log.warn("[UNBINDING] CANNOT UNBIND - {}. Participants must be in same place for safe unbinding.",
-                        readiness.message());
-
-                // Keep both waiting - add current one back to waiting list
-                WaitingBinding newWaiting = new WaitingBinding(
-                        processDefinitionId,
-                        targetParticipantRef,
-                        currentParticipantRef,
-                        businessKey,
-                        execution.getId(),
-                        TaskType.UNBINDING,
-                        Instant.now()
-                );
-                bindingService.addWaitingUnbinding(newWaiting);
-
-                // Store status for monitoring
-                execution.setVariable("unbindingWaitReason_" + activityId, readiness.message());
-            }
-
-        } else {
-            // First participant requesting unbind - add to waiting
-            WaitingBinding newWaiting = new WaitingBinding(
-                    processDefinitionId,
-                    targetParticipantRef,
-                    currentParticipantRef,
-                    businessKey,
-                    execution.getId(),
-                    TaskType.UNBINDING,
-                    Instant.now()
-            );
-            bindingService.addWaitingUnbinding(newWaiting);
-
-            log.info("[UNBINDING] WAITING - {} added to waiting list. Waiting for {} to also request unbind.",
-                    currentParticipantRef, targetParticipantRef);
-
-            // Store waiting status
-            execution.setVariable("unbindingWaitingFor_" + activityId, targetParticipantRef);
-        }
-    }
-
-    /**
-     * Handle unbinding when no explicit message flow is defined
-     * This uses the last bound participant information
-     */
-    private void handleUnbindingWithoutFlow(DelegateExecution execution) {
-        String activityId = execution.getCurrentActivityId();
-        String businessKey = execution.getBusinessKey();
-
-        // Try to get participant info from process variables (set during binding)
-        String currentParticipantId = (String) execution.getVariable("currentParticipantId");
-        String boundParticipantId = (String) execution.getVariable("boundParticipantId");
-
-        if (currentParticipantId == null || boundParticipantId == null) {
-            log.error("[UNBINDING] Cannot determine participants for unbinding. Missing binding context.");
+        if (currentParticipant == null || targetParticipant == null) {
+            log.error("[UNBINDING] Failed to resolve participants for task {}: current={}, target={}",
+                activityId, currentParticipant, targetParticipant);
             return;
         }
 
-        log.info("[UNBINDING] Resolved from context - {} unbinding from {}",
-                currentParticipantId, boundParticipantId);
+        String currentParticipantId = currentParticipant.getId();
+        String targetParticipantId = targetParticipant.getId();
 
-        // Check if other is waiting
-        Optional<WaitingBinding> waitingUnbinding = bindingService.findWaitingUnbinding(
-                businessKey, currentParticipantId);
-
-        if (waitingUnbinding.isPresent()) {
-            WaitingBinding match = waitingUnbinding.get();
-
-            Place unbindingPlace = proximityService.getBindingPlace(
-                    currentParticipantId, match.getCurrentParticipantId());
-
-            if (unbindingPlace != null) {
-                log.info("[UNBINDING] Both participants ready and in place: {}", unbindingPlace.getName());
-
-                execution.setVariable("unbindingPlaceId", unbindingPlace.getId());
-                execution.setVariable("unbindingPlaceName", unbindingPlace.getName());
-
-                bindingService.removeWaitingUnbinding(businessKey, currentParticipantId);
-                runtimeService.signal(match.getExecutionId());
-                execution.setVariable("unbindingCompleted_" + activityId, true);
-
-            } else {
-                log.warn("[UNBINDING] Participants not in same place - cannot unbind safely");
-
-                WaitingBinding newWaiting = new WaitingBinding(
-                        execution.getProcessDefinitionId(),
-                        boundParticipantId,
-                        currentParticipantId,
-                        businessKey,
-                        execution.getId(),
-                        TaskType.UNBINDING,
-                        Instant.now()
-                );
-                bindingService.addWaitingUnbinding(newWaiting);
-            }
-        } else {
-            WaitingBinding newWaiting = new WaitingBinding(
-                    execution.getProcessDefinitionId(),
-                    boundParticipantId,
-                    currentParticipantId,
-                    businessKey,
-                    execution.getId(),
-                    TaskType.UNBINDING,
-                    Instant.now()
+        String userId = (String) execution.getVariable("userId");
+        if (userId != null && currentParticipantId != null && businessKey != null) {
+            userParticipantMapping.registerUserAsParticipant(
+                businessKey,
+                userId,
+                currentParticipantId
             );
-            bindingService.addWaitingUnbinding(newWaiting);
 
-            log.info("[UNBINDING] First participant {} waiting for {} to unbind",
-                    currentParticipantId, boundParticipantId);
+            log.info("[UNBINDING] Auto-registered user {} as participant {} for BK {}",
+                userId, currentParticipantId, businessKey);
         }
+
+        log.info("[UNBINDING] Task {} started - Participant {} ({}) waiting for unbind with {} ({}) | Timer: {}",
+            activityId, currentParticipant.getLogDisplayName(), currentParticipantId,
+            targetParticipant.getLogDisplayName(), targetParticipantId,
+            timerValue != null ? timerValue : "(empty)");
+
+        unbindingTaskRegistry.registerTask(
+            businessKey,
+            currentParticipantId,
+            targetParticipantId,
+            execution.getId(),
+            activityId,
+            timerValue
+        );
     }
 
     private void handleUnbindingEnd(DelegateExecution execution) {
+        String bpmnErrorCode = (String) execution.getVariableLocal(BPMN_ERROR_CODE_VAR);
+        String bpmnErrorMessage = (String) execution.getVariableLocal(BPMN_ERROR_MESSAGE_VAR);
+        execution.removeVariableLocal(BPMN_ERROR_CODE_VAR);
+        execution.removeVariableLocal(BPMN_ERROR_MESSAGE_VAR);
+
         String activityId = execution.getCurrentActivityId();
         String businessKey = execution.getBusinessKey();
         String processDefinitionId = execution.getProcessDefinitionId();
@@ -228,27 +114,74 @@ public class UnbindingExecutionListener implements ExecutionListener {
         MessageFlowBinding flowBinding = messageFlowRegistry.getFlowBinding(processDefinitionId, activityId);
 
         if (flowBinding != null) {
-            String participantRef = activityId.equals(flowBinding.getSourceTaskRef())
-                    ? flowBinding.getSourceParticipantRef()
-                    : flowBinding.getTargetParticipantRef();
-
-            bindingService.removeWaitingUnbinding(businessKey, participantRef);
-
-            log.info("[UNBINDING] Task {} ended for participant {}", activityId, participantRef);
-        } else {
-            // Try to clean up using stored participant ID
-            String currentParticipantId = (String) execution.getVariable("currentParticipantId");
-            if (currentParticipantId != null) {
-                bindingService.removeWaitingUnbinding(businessKey, currentParticipantId);
+            Participant participant = participantService.resolveCurrentParticipant(execution);
+            if (participant != null) {
+                unbindingTaskRegistry.removeTask(businessKey, participant.getId());
+            } else {
+                log.warn("[UNBINDING] Could not resolve participant for task end cleanup: {}", activityId);
             }
         }
 
         execution.removeVariable("unbindingCompleted_" + activityId);
         execution.removeVariable("unbindingWaitReason_" + activityId);
         execution.removeVariable("unbindingWaitingFor_" + activityId);
-
+        execution.removeVariable("unbindingPlaceId");
+        execution.removeVariable("unbindingPlaceName");
+        execution.removeVariable("unbindingTimestamp");
         execution.removeVariable("boundParticipantId");
 
-        log.info("[UNBINDING] Task {} cleanup completed", activityId);
+        log.info("[UNBINDING] Task {} ended", activityId);
+
+        if (bpmnErrorCode != null && !bpmnErrorCode.isBlank()) {
+            throw new BpmnError(
+                    bpmnErrorCode,
+                    bpmnErrorMessage != null ? bpmnErrorMessage : "Unbinding task failed"
+            );
+        }
+    }
+
+    private Double extractTimerValue(DelegateExecution execution) {
+        String raw = extractExtensionValue(execution, TIMER_LOCAL_NAME);
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        try {
+            double parsed = Double.parseDouble(raw.trim());
+            if (parsed < 0) {
+                log.warn("[UNBINDING] Invalid negative timer '{}' for activity {}. Ignoring.",
+                        raw, execution.getCurrentActivityId());
+                return null;
+            }
+            return parsed;
+        } catch (NumberFormatException ex) {
+            log.warn("[UNBINDING] Invalid non-numeric timer '{}' for activity {}. Ignoring.",
+                    raw, execution.getCurrentActivityId());
+            return null;
+        }
+    }
+
+    private String extractExtensionValue(DelegateExecution execution, String localName) {
+        ModelElementInstance modelElement = execution.getBpmnModelElementInstance();
+        if (!(modelElement instanceof Task task)) {
+            return null;
+        }
+
+        ExtensionElements extensionElements = task.getExtensionElements();
+        if (extensionElements == null) {
+            return null;
+        }
+
+        return extensionElements.getDomElement().getChildElements().stream()
+                .filter(domElement -> isSpaceElement(domElement, localName))
+                .map(DomElement::getTextContent)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean isSpaceElement(DomElement domElement, String localName) {
+        return localName.equalsIgnoreCase(domElement.getLocalName())
+                && SPACE_NS.getNamespaceUri().equals(domElement.getNamespaceURI());
     }
 }

@@ -3,6 +3,7 @@ import { LogicalPlace as LogicalPlaceType, PhysicalPlace } from '../../../envTyp
 import { useEnvStore } from '../../../envStore';
 import LogicalPlaceEditor from './LogicalPlaceEditor';
 import { highlightFeature, unhighlightFeature, fitFeaturesOnMap } from '../../../utils';
+import Modal from '../../shared/Modal';
 
 const LogicalPlace = ({ item }: { item: LogicalPlaceType }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,19 +61,21 @@ const LogicalPlace = ({ item }: { item: LogicalPlaceType }) => {
           // }
         }}
       >
-        <span>{item.name}</span>
+        <span className="text-nowrap px-2 flex-fill">{item.name}</span>
 
         <div className="btn-group btn-group-sm">
           <button
-            className="btn btn-outline-light p-1 me-1"
+            className="btn btn-outline-light btn-sm px-2"
             onClick={() => setIsModalOpen(true)}
+            style={{ minWidth: "30px" }}
             title="Edit Logical Place"
             hidden={!isEditable}
           >
             ✎
           </button>
           <button
-            className="btn btn-outline-danger p-1"
+            className="btn btn-outline-danger btn-sm px-2"
+            style={{ minWidth: "30px" }}
             onClick={() => removeLogicalPlace(item.id)}
             title="Delete Logical Place"
             hidden={!isEditable}
@@ -83,27 +86,15 @@ const LogicalPlace = ({ item }: { item: LogicalPlaceType }) => {
       </li>
 
       {isModalOpen && (
-        <div className="modal d-block" tabIndex={-1} role="dialog">
-          <div className="modal-dialog" role="document">
-            <div className="modal-content bg-dark text-white">
-              <div className="modal-header">
-                <h5 className="modal-title">Edit Logical Place</h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  aria-label="Close"
-                  onClick={() => setIsModalOpen(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <LogicalPlaceEditor
-                  initialPlace={item}
-                  onSave={() => setIsModalOpen(false)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Edit Logical Place"
+          onClose={() => setIsModalOpen(false)}
+        >
+          <LogicalPlaceEditor
+            initialPlace={item}
+            onSave={() => setIsModalOpen(false)}
+          />
+        </Modal>
       )}
     </>
   );

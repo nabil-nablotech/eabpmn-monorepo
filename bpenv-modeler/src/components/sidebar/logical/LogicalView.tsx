@@ -21,25 +21,26 @@ const LogicalView = ({ view }: { view: View }) => {
     return (
         <div className="mb-2">
             <div
-                className="btn btn-outline-light w-100 text-start d-flex justify-content-between align-items-center"
+                className="border border-white text-start d-flex align-items-center"
                 onClick={() => setIsOpen(!isOpen)}
                 style={{ cursor: 'pointer' }}
             >
-                <span>{isOpen ? '▼' : '▶'} {view.name}</span>
+                <span className="text-nowrap px-2 flex-fill">{isOpen ? '▼' : '▶'} {view.name}</span>
                 <div className="btn-group btn-group-sm">
                     <button
-                        className="btn btn-sm btn-outline-light p-1 me-1"
+                        className="btn btn-outline-light btn-sm px-2"
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsEditing(true);
                         }}
+                        style={{ minWidth: "30px" }}
                         title="Edit view"
                         hidden={!isEditable}
                     >
                         ✎
                     </button>
                     <button
-                        className="btn btn-outline-danger p-1"
+                        className="btn btn-outline-danger btn-sm px-2" style={{ minWidth: "30px" }}
                         onClick={(e) => {
                             e.stopPropagation();
                             removeView(view.id);

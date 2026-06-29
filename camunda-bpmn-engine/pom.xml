@@ -33,6 +33,10 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
@@ -100,12 +104,22 @@
                 <version>3.11.0</version>
                 <configuration>
                     <release>${java.version}</release>
+<<<<<<< HEAD
+=======
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+<<<<<<< HEAD
+=======
+                <version>${spring.boot.version}</version>
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
             </plugin>
         </plugins>
     </build>

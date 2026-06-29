@@ -98,7 +98,7 @@
             ]
         },
         {
-            "name": "TaskAssignment",
+            "name": "Guard",
             "superClass": [
                 "Element"
             ],
@@ -111,7 +111,20 @@
             ]
         },
         {
-            "name": "TaskAssignmentReached",
+            "name": "Action",
+            "superClass": [
+                "Element"
+            ],
+            "properties": [
+                {
+                    "name": "body",
+                    "isBody": true,
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "name": "Timer",
             "superClass": [
                 "Element"
             ],

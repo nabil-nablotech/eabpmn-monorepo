@@ -7,7 +7,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.unicam.intermediate.models.WaitingBinding;
 import org.unicam.intermediate.models.environmental.LocationUpdateEvent;
+<<<<<<< HEAD
 import org.unicam.intermediate.models.pojo.Place;
+=======
+import org.unicam.intermediate.models.pojo.PhysicalPlace;
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
 import org.unicam.intermediate.models.record.MovementResponse;
 import org.unicam.intermediate.service.environmental.movement.GpsProcessingService;
 import org.unicam.intermediate.service.participant.ParticipantPositionService;
@@ -41,9 +45,15 @@ public class LocationEventService {
         List<String> triggeredEvents = new ArrayList<>();
 
         // 1. Determine which place the location is in
+<<<<<<< HEAD
         Optional<Place> currentPlace = environmentDataService.findPlaceContainingLocation(lat, lon);
         String placeId = currentPlace.map(Place::getId).orElse(null);
         String placeName = currentPlace.map(Place::getName).orElse("Unknown");
+=======
+        Optional<PhysicalPlace> currentPlace = environmentDataService.findPhysicalPlaceContainingLocation(lat, lon);
+        String placeId = currentPlace.map(PhysicalPlace::getId).orElse(null);
+        String placeName = currentPlace.map(PhysicalPlace::getName).orElse("Unknown");
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
 
         // 2. Update position (using existing service)
         positionService.updatePosition(participantId, lat, lon, placeId);
@@ -120,7 +130,11 @@ public class LocationEventService {
                     : wb.getCurrentParticipantId();
 
             // Use EXISTING proximityService
+<<<<<<< HEAD
             Place bindingPlace = proximityService.getBindingPlace(
+=======
+            PhysicalPlace bindingPlace = proximityService.getBindingPlace(
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
                     wb.getCurrentParticipantId(), wb.getTargetParticipantId());
 
             if (bindingPlace != null) {
@@ -145,7 +159,11 @@ public class LocationEventService {
                     ? wu.getTargetParticipantId()
                     : wu.getCurrentParticipantId();
 
+<<<<<<< HEAD
             Place unbindingPlace = proximityService.getBindingPlace(
+=======
+            PhysicalPlace unbindingPlace = proximityService.getBindingPlace(
+>>>>>>> 42e6b1bb38391fb227a028593869ca0eb8131e39
                     wu.getCurrentParticipantId(), wu.getTargetParticipantId());
 
             if (unbindingPlace != null) {

@@ -16,7 +16,7 @@ export const TASK_TYPES_CONFIG = {
     typeValue: 'Movement',
     displayName: 'Movement Task',
     icon: { class: 'movement-badge', iconFile: movementIcon },
-    extensionElements: [ 'space:Type', 'space:Destination', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
+    extensionElements: [ 'space:Type', 'space:Destination', 'space:Guard', 'space:Timer', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
     defaultDestination: '${destination}',
     validationRules: [],
     formType: 'destination'
@@ -26,7 +26,7 @@ export const TASK_TYPES_CONFIG = {
     typeValue: 'Binding',
     displayName: 'Binding Task',
     icon: { class: 'binding-badge', iconFile: bindIcon },
-    extensionElements: [ 'space:Type', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
+    extensionElements: [ 'space:Type', 'space:Guard', 'space:Timer', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
     validationRules: [],
     formType: 'none'
   },
@@ -35,7 +35,7 @@ export const TASK_TYPES_CONFIG = {
     typeValue: 'Unbinding',
     displayName: 'Unbinding Task',
     icon: { class: 'unbinding-badge', iconFile: unbindIcon },
-    extensionElements: [ 'space:Type', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
+    extensionElements: [ 'space:Type', 'space:Guard', 'space:Timer', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
     validationRules: [ 'requiresUpstreamBinding' ],
     formType: 'none'
   },
@@ -44,7 +44,7 @@ export const TASK_TYPES_CONFIG = {
     typeValue: 'Environmental',
     displayName: 'Environmental Task',
     icon: { class: 'environmental-badge', iconFile: environmentalIcon },
-    extensionElements: [ 'space:Type', 'space:TaskAssignment', 'space:TaskAssignmentReached' ],
+    extensionElements: [ 'space:Type', 'space:Guard', 'space:Action', 'space:Timer' ],
     validationRules: [],
     formType: 'none'
   }
@@ -57,8 +57,9 @@ export const EXTENSION_TYPES = {
   PARTICIPANT2: 'space:Participant2',
   CONNECTION_MODE: 'space:ConnectionMode',
   LEADER_ID: 'space:LeaderId',
-  TASK_ASSIGNMENT: 'space:TaskAssignment',
-  TASK_ASSIGNMENT_REACHED: 'space:TaskAssignmentReached'
+  GUARD: 'space:Guard',
+  ACTION: 'space:Action',
+  TIMER: 'space:Timer'
 };
 
 /** Connection mode for binding/unbinding: 'static' | 'dynamic' (default) */

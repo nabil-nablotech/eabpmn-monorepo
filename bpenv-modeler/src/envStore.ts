@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PhysicalPlace, LogicalPlace, Edge, View } from './envTypes';
-import { clearFeatures, removeFeature, drawPlace, drawEdge, getFeature, enablePlaceDrawing, enableEdgeDrawing, disableDrawing, fitFeaturesOnMap} from './utils';
+import { clearFeatures, removeFeature, drawPlace, drawEdge, getFeature, enablePlaceDrawing, enableEdgeDrawing, enableOSMSelection, disableDrawing, fitFeaturesOnMap} from './utils';
 import Map from 'ol/Map.js';
 
 type EnvStore = {
@@ -10,8 +10,8 @@ type EnvStore = {
     isEditable: boolean;
     setEditable: (editable: boolean) => void;
 
-    activeTool: 'hand' | 'place' | 'edge';
-    setActiveTool: (tool: 'hand' | 'place' | 'edge') => void;
+    activeTool: 'hand' | 'place' | 'edge' | 'select';
+    setActiveTool: (tool: 'hand' | 'place' | 'edge' | 'select') => void;
 
     physicalPlaces: PhysicalPlace[];
     logicalPlaces: LogicalPlace[];
@@ -33,6 +33,8 @@ type EnvStore = {
     addView: (view: View) => void;
     updateView: (id: string, updatedView: Partial<View>) => void;
     removeView: (id: string) => void;
+
+    updateMqttAttributes: (placeId: string, mqttData: Record<string, any>) => void;
 
     setModel: (model: {
         physicalPlaces: PhysicalPlace[],
@@ -57,6 +59,8 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
             enablePlaceDrawing(get().mapInstance);
         else if (tool === 'edge')
             enableEdgeDrawing(get().mapInstance);
+        else if (tool === 'select')
+            enableOSMSelection(get().mapInstance);
         set({ activeTool: tool });
     },
 
@@ -141,6 +145,24 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
             views: state.views.filter((v) => v.id !== id)
         })),
 
+    updateMqttAttributes: (placeId, mqttData) =>
+        set((state) => ({
+            physicalPlaces: state.physicalPlaces.map((p) =>
+                p.id === placeId
+                    ? {
+                        ...p,
+                        attributes: {
+                            ...p.attributes,
+                            mqtt: {
+                                ...p.attributes.mqtt,
+                                light: mqttData
+                            }
+                        }
+                    }
+                    : p
+            )
+        })),
+
     setModel: (model) => {
         clearFeatures(get().mapInstance);
         set(() => ({
@@ -150,9 +172,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
             views: model.views
         }));
 
-        model.physicalPlaces.forEach((place: PhysicalPlace) => {
-            drawPlace(get().mapInstance, place.id, place.coordinates);
-        });
+        model.physicalPlaces.forEach((place: PhysicalPlace) => drawPlace(get().mapInstance, place.id, place.coordinates));
         model.edges.forEach((edge: Edge) => {
             const sourceFeature = getFeature(get().mapInstance, edge.source);
             const targetFeature = getFeature(get().mapInstance, edge.target);

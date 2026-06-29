@@ -25,16 +25,28 @@ function SpacePropertiesProvider(
 
   console.info('SpacePropertiesProvider initialized');
 
+  const isSupportedSpaceElement = (element) => {
+    return element && (
+      element.type === 'bpmn:Task' ||
+      element.type === 'bpmn:SendTask' ||
+      element.type === 'bpmn:StartEvent'
+    );
+  };
+
   eventBus.on('selection.changed', (event) => {
     if (event.newSelection && event.newSelection.length === 1) {
       const element = event.newSelection[0];
 
-      if (element.type === 'bpmn:Task') {
+      if (isSupportedSpaceElement(element)) {
         setTimeout(() => this.createStandaloneSpaceSection(element), 200);
       } else if (element.type === 'bpmn:MessageFlow') {
 
         // Show binding info for connections
         setTimeout(() => this.createMessageFlowSpaceSection(element), 200);
+      } else if (element.type === 'bpmn:SequenceFlow') {
+
+        // Show guard properties for sequence flows
+        setTimeout(() => this.createSequenceFlowSpaceSection(element), 200);
       } else {
         setTimeout(() => this.showEnvironmentSection(), 200);
       }
@@ -51,7 +63,7 @@ function SpacePropertiesProvider(
   eventBus.on('elements.changed', (event) => {
     if (event.elements && event.elements.length > 0) {
       const element = event.elements[0];
-      if (element.type === 'bpmn:Task') {
+      if (isSupportedSpaceElement(element)) {
         setTimeout(() => this.refreshSpaceSection(element), 100);
       }
     }
@@ -115,6 +127,104 @@ SpacePropertiesProvider.prototype.createMessageFlowSpaceSection = function(messa
     propertiesPanel.insertBefore(section, propertiesPanel.firstChild);
   }
 };
+
+/**
+ * Create Space Properties section for sequence flows.
+ * Exposes an editable space:Guard field, like environmental tasks.
+ */
+// SpacePropertiesProvider.prototype.createSequenceFlowSpaceSection = function(sequenceFlow) {
+//   const propertiesPanel = document.querySelector('.bio-properties-panel-scroll-container');
+//   if (!propertiesPanel) {
+//     console.error('Properties panel scroll container not found');
+//     return;
+//   }
+
+//   const existingSection = propertiesPanel.querySelector('.space-properties-section');
+//   if (existingSection) {
+//     existingSection.remove();
+//   }
+
+//   const section = this.createSequenceFlowSection(sequenceFlow);
+
+//   const generalSection = propertiesPanel.querySelector('[data-group-id*="general"]');
+//   if (generalSection && generalSection.nextSibling) {
+//     propertiesPanel.insertBefore(section, generalSection.nextSibling);
+//   } else {
+//     propertiesPanel.insertBefore(section, propertiesPanel.firstChild);
+//   }
+// };
+
+// SpacePropertiesProvider.prototype.createSequenceFlowSection = function(sequenceFlow) {
+//   const section = document.createElement('div');
+//   section.className = 'bio-properties-panel-group space-properties-section';
+//   section.setAttribute('data-group-id', 'group-space-properties');
+
+//   const translate = this._translate;
+//   const guardValue = this._extensionService.getGuard(sequenceFlow) || '';
+//   const isExpanded = true;
+//   const hasData = !!guardValue.trim();
+
+//   section.innerHTML = `
+//     <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasData ? '' : 'empty'}">
+//       <div title="Environmental Properties" 
+//            data-title="Environmental Properties" 
+//            class="bio-properties-panel-group-header-title">
+//           Environmental Properties
+//       </div>
+//       <div class="bio-properties-panel-group-header-buttons">
+//         ${hasData ? '<div title="Section contains data" class="bio-properties-panel-dot"></div>' : ''}
+//         <button type="button" 
+//                 title="Toggle section" 
+//                 class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+//           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+//             <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+//           </svg>
+//         </button>
+//       </div>
+//     </div>
+
+//     <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+//       <div data-entry-id="space-sequenceflow-guard" class="bio-properties-panel-entry">
+//         <div class="bio-properties-panel-textfield">
+//           <label for="space-sequenceflow-guard-input" class="bio-properties-panel-label">Guard</label>
+//           <input id="space-sequenceflow-guard-input"
+//                  type="text"
+//                  name="spaceSequenceFlowGuard"
+//                  spellcheck="false"
+//                  autocomplete="off"
+//                  class="bio-properties-panel-input space-sequenceflow-guard-input"
+//                  placeholder="${translate('Enter guard condition')}"
+//                  value="${this.escapeHtml(guardValue)}" />
+//         </div>
+//       </div>
+//     </div>
+//   `;
+
+//   this.attachSequenceFlowGuardListener(section, sequenceFlow);
+//   return section;
+// };
+
+// SpacePropertiesProvider.prototype.attachSequenceFlowGuardListener = function(section, sequenceFlow) {
+//   const guardInput = section.querySelector('.space-sequenceflow-guard-input');
+//   if (!guardInput) {
+//     return;
+//   }
+
+//   [ 'input', 'blur', 'change' ].forEach(eventType => {
+//     guardInput.addEventListener(eventType, (e) => {
+//       try {
+//         const value = e.target.value.trim();
+//         if (value) {
+//           this._extensionService.setExtension(sequenceFlow, 'space:Guard', value);
+//         }
+
+//         this._eventBus.fire('elements.changed', { elements: [ sequenceFlow ] });
+//       } catch (error) {
+//         console.error('Error saving sequence flow guard:', error);
+//       }
+//     });
+//   });
+// };
 
 /**
  * Create the Space Properties section for message flow.
@@ -670,18 +780,27 @@ SpacePropertiesProvider.prototype.createStandaloneSpaceSection = function(elemen
 
 // FIXED: Removed the double 'S' typo here
 SpacePropertiesProvider.prototype.createSpaceSection = function(element) {
+  if (element.type === 'bpmn:StartEvent') {
+    return this.createStartEventSpaceSectionContent(element);
+  }
+
+  if (element.type === 'bpmn:SendTask') {
+    return this.createSendTaskSpaceSectionContent(element);
+  }
+
   const section = document.createElement('div');
   section.className = 'bio-properties-panel-group space-properties-section';
   section.setAttribute('data-group-id', 'group-space-properties');
 
   const currentType = this._extensionService.getCurrentType(element);
+  const currentGuard = this._extensionService.getGuard(element) || '';
   const translate = this._translate;
 
   // NEW: Get assignment count for badge
   const assignmentCount = this._assignmentService.getAssignmentCount(element);
 
-  const isExpanded = !!currentType;
-  const hasData = !!currentType;
+  const isExpanded = !!currentType || !!currentGuard.trim();
+  const hasData = !!currentType || !!currentGuard.trim();
 
   section.innerHTML = `
     <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasData ? '' : 'empty'}">
@@ -743,15 +862,162 @@ SpacePropertiesProvider.prototype.createSpaceSection = function(element) {
            class="bio-properties-panel-entry space-binding-entry" 
            style="${currentType !== 'binding' ? 'display: none;' : ''}">
       </div>
+
+      <div data-entry-id="space-action" 
+           class="bio-properties-panel-entry space-action-entry" 
+           style="${currentType !== 'environmental' ? 'display: none;' : ''}">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-action-input" class="bio-properties-panel-label">Action</label>
+          <input id="space-action-input" 
+                 type="text" 
+                 name="spaceAction" 
+                 spellcheck="false" 
+                 autocomplete="off" 
+                 class="bio-properties-panel-input space-action-input"
+                 placeholder="${translate('Enter action')}"
+                 value="${this._extensionService.getAction(element) || ''}" />
+        </div>
+      </div>
       
-      <!-- NEW: Task Assignments Section (shown for all task types) -->
-      ${currentType==="environmental" ? this.renderTaskAssignments(element) : ''}
+      <div data-entry-id="space-guard" 
+           class="bio-properties-panel-entry space-guard-entry" 
+         style="display: block;">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-guard-input" class="bio-properties-panel-label">Guard</label>
+          <input id="space-guard-input" 
+                 type="text" 
+                 name="spaceGuard" 
+                 spellcheck="false" 
+                 autocomplete="off" 
+                 class="bio-properties-panel-input space-guard-input"
+                 placeholder="${translate('Enter guard condition')}"
+                 value="${this._extensionService.getGuard(element) || ''}" />
+        </div>
+      </div>
+
+      <div data-entry-id="space-timer" 
+           class="bio-properties-panel-entry space-timer-entry" 
+         style="${(currentType !== 'environmental' && currentType !== 'movement' && currentType !== 'binding' && currentType !== 'unbinding') ? 'display: none;' : ''}">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-timer-input" class="bio-properties-panel-label">Timer (optional)</label>
+          <input id="space-timer-input"
+                 type="number"
+                 min="0"
+                 step="1"
+                 name="spaceTimer"
+                 spellcheck="false"
+                 autocomplete="off"
+                 class="bio-properties-panel-input space-timer-input"
+                 placeholder="${translate('Enter timer value')}"
+                 value="${this._extensionService.getTimer(element) || ''}" />
+        </div>
+      </div>
+      </div>
+      `;
       
+  // <!-- NEW: Task Assignments Section (shown for all task types) -->
+  // ${currentType==="environmental" ? this.renderTaskAssignments(element) : ''}
+  this.attachSectionEventListeners(section, element);
+
+  return section;
+};
+
+SpacePropertiesProvider.prototype.createSendTaskSpaceSectionContent = function(element) {
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-space-properties');
+
+  const currentGuard = this._extensionService.getGuard(element) || '';
+  const translate = this._translate;
+  const hasData = !!currentGuard.trim();
+  const isExpanded = hasData;
+
+  section.innerHTML = `
+    <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasData ? '' : 'empty'}">
+       <div title="Environmental Properties" 
+         data-title="Environmental Properties" 
+           class="bio-properties-panel-group-header-title">
+        Environmental Properties
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        ${hasData ? '<div title="Section contains data" class="bio-properties-panel-dot"></div>' : ''}
+        <button type="button" 
+                title="Toggle section" 
+                class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+      <div data-entry-id="space-guard" class="bio-properties-panel-entry space-guard-entry" style="display: block;">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-guard-input" class="bio-properties-panel-label">Guard</label>
+          <input id="space-guard-input"
+                 type="text"
+                 name="spaceGuard"
+                 spellcheck="false"
+                 autocomplete="off"
+                 class="bio-properties-panel-input space-guard-input"
+                 placeholder="${translate('Enter guard condition')}"
+                 value="${currentGuard}" />
+        </div>
+      </div>
     </div>
   `;
 
   this.attachSectionEventListeners(section, element);
+  return section;
+};
 
+SpacePropertiesProvider.prototype.createStartEventSpaceSectionContent = function(element) {
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-space-properties');
+
+  const currentGuard = this._extensionService.getGuard(element) || '';
+  const translate = this._translate;
+  const hasData = !!currentGuard.trim();
+  const isExpanded = hasData;
+
+  section.innerHTML = `
+    <div class="bio-properties-panel-group-header ${isExpanded ? 'open' : ''} ${hasData ? '' : 'empty'}">
+       <div title="Environmental Properties"
+         data-title="Environmental Properties"
+           class="bio-properties-panel-group-header-title">
+        Environmental Properties
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        ${hasData ? '<div title="Section contains data" class="bio-properties-panel-dot"></div>' : ''}
+        <button type="button"
+                title="Toggle section"
+                class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${isExpanded ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${isExpanded ? 'open' : ''}" style="${isExpanded ? '' : 'display: none;'}">
+      <div data-entry-id="space-guard" class="bio-properties-panel-entry space-guard-entry" style="display: block;">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-guard-input" class="bio-properties-panel-label">Condition</label>
+          <input id="space-guard-input"
+                 type="text"
+                 name="spaceGuard"
+                 spellcheck="false"
+                 autocomplete="off"
+                 class="bio-properties-panel-input space-guard-input"
+                 value="${currentGuard}" />
+        </div>
+      </div>
+    </div>
+  `;
+
+  this.attachSectionEventListeners(section, element);
   return section;
 };
 
@@ -1003,6 +1269,9 @@ SpacePropertiesProvider.prototype.attachSectionEventListeners = function(section
   const typeSelect = section.querySelector('.space-type-select');
   const destinationInput = section.querySelector('.space-destination-input');
   const bindingInput = section.querySelector('.space-binding-input');
+  const guardInput = section.querySelector('.space-guard-input');
+  const actionInput = section.querySelector('.space-action-input');
+  const timerInput = section.querySelector('.space-timer-input');
 
   // Type selection
   if (typeSelect) {
@@ -1060,6 +1329,85 @@ SpacePropertiesProvider.prototype.attachSectionEventListeners = function(section
 
         } catch (error) {
           console.error('Error saving binding:', error);
+        }
+      });
+    });
+  }
+
+  // Guard input - save on change
+  if (guardInput) {
+    [ 'input', 'blur', 'change' ].forEach(eventType => {
+      guardInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+          if (value) {
+            this._extensionService.setExtension(element, EXTENSION_TYPES.GUARD, value);
+          } else {
+            this._extensionService.removeExtensions(
+              element,
+              ext => ext.$type === EXTENSION_TYPES.GUARD
+            );
+          }
+
+          this.updateSectionIndicators(section, element);
+
+        } catch (error) {
+          console.error('Error saving guard:', error);
+        }
+      });
+    });
+  }
+
+  // Action input - save on change
+  if (actionInput) {
+    [ 'input', 'blur', 'change' ].forEach(eventType => {
+      actionInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+          if (value) {
+            this._extensionService.setExtension(element, EXTENSION_TYPES.ACTION, value);
+          } else {
+            this._extensionService.removeExtensions(
+              element,
+              ext => ext.$type === EXTENSION_TYPES.ACTION
+            );
+          }
+
+          this.updateSectionIndicators(section, element);
+
+        } catch (error) {
+          console.error('Error saving action:', error);
+        }
+      });
+    });
+  }
+
+  // Timer input - optional numeric value for environmental and movement tasks
+  if (timerInput) {
+    [ 'input', 'blur', 'change' ].forEach(eventType => {
+      timerInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+
+          if (!value) {
+            this._extensionService.removeExtensions(
+              element,
+              ext => ext.$type === EXTENSION_TYPES.TIMER
+            );
+            this.updateSectionIndicators(section, element);
+            return;
+          }
+
+          const numeric = Number(value);
+          if (!Number.isFinite(numeric) || numeric < 0) {
+            return;
+          }
+
+          this._extensionService.setExtension(element, EXTENSION_TYPES.TIMER, String(numeric));
+          this.updateSectionIndicators(section, element);
+
+        } catch (error) {
+          console.error('Error saving timer:', error);
         }
       });
     });
@@ -1150,36 +1498,36 @@ SpacePropertiesProvider.prototype.attachAssignmentListeners = function(section, 
   });
 };
 
-SpacePropertiesProvider.prototype.refreshAssignmentsSection = function(section, element) {
-  const assignmentsEntry = section.querySelector('.space-assignments-entry');
-  if (!assignmentsEntry) return;
+// SpacePropertiesProvider.prototype.refreshAssignmentsSection = function(section, element) {
+//   const assignmentsEntry = section.querySelector('.space-assignments-entry');
+//   if (!assignmentsEntry) return;
 
-  // Get the fresh HTML for assignments
-  const newAssignmentsHTML = this.renderTaskAssignments(element);
+//   // Get the fresh HTML for assignments
+//   const newAssignmentsHTML = this.renderTaskAssignments(element);
 
-  // Create a temporary container to parse the HTML
-  const temp = document.createElement('div');
-  temp.innerHTML = newAssignmentsHTML;
+//   // Create a temporary container to parse the HTML
+//   const temp = document.createElement('div');
+//   temp.innerHTML = newAssignmentsHTML;
 
-  // Find the actual content inside the wrapper
-  const newContent = temp.querySelector('.bio-properties-panel-assignments');
+//   // Find the actual content inside the wrapper
+//   const newContent = temp.querySelector('.bio-properties-panel-assignments');
 
-  // Find the existing container and replace its content
-  const existingContainer = assignmentsEntry.querySelector('.bio-properties-panel-assignments');
-  if (existingContainer && newContent) {
-    existingContainer.innerHTML = newContent.innerHTML;
-  } else {
+//   // Find the existing container and replace its content
+//   const existingContainer = assignmentsEntry.querySelector('.bio-properties-panel-assignments');
+//   if (existingContainer && newContent) {
+//     existingContainer.innerHTML = newContent.innerHTML;
+//   } else {
 
-    // Fallback: replace entire content
-    assignmentsEntry.innerHTML = newAssignmentsHTML;
-  }
+//     // Fallback: replace entire content
+//     assignmentsEntry.innerHTML = newAssignmentsHTML;
+//   }
 
-  // Re-attach event listeners
-  this.attachAssignmentListeners(section, element);
+//   // Re-attach event listeners
+//   this.attachAssignmentListeners(section, element);
 
-  // Update the section indicators to refresh the badge count
-  this.updateSectionIndicators(section, element);
-};
+//   // Update the section indicators to refresh the badge count
+//   this.updateSectionIndicators(section, element);
+// };
 
 // SpacePropertiesProvider.prototype.validateAssignmentField = function(input, value, type) {
 //   const assignmentItem = input.closest('.assignment-item');
@@ -1227,19 +1575,49 @@ SpacePropertiesProvider.prototype.updateDestinationAttributes = function(section
 };
 
 SpacePropertiesProvider.prototype.updateFieldVisibility = function(section, selectedType) {
+  if (selectedType === undefined && section.querySelector('.space-type-select') === null) {
+    const guardEntry = section.querySelector('.space-guard-entry');
+    if (guardEntry) {
+      guardEntry.style.display = 'block';
+    }
+    return;
+  }
+
   const destinationEntry = section.querySelector('.space-destination-entry');
   const bindingEntry = section.querySelector('.space-binding-entry');
   const unbindingEntry = section.querySelector('.space-unbinding-entry');
+  const guardEntry = section.querySelector('.space-guard-entry');
+  const actionEntry = section.querySelector('.space-action-entry');
+  const timerEntry = section.querySelector('.space-timer-entry');
 
   if (destinationEntry) {
     destinationEntry.style.display = selectedType === TASK_TYPE_KEYS.MOVEMENT ? 'block' : 'none';
   }
+
+  // By requirement, binding/unbinding should not expose extra fields here.
   if (bindingEntry) {
-    bindingEntry.style.display = selectedType === TASK_TYPE_KEYS.BINDING ? 'block' : 'none';
+    bindingEntry.style.display = 'none';
   }
   if (unbindingEntry) {
-    unbindingEntry.style.display = selectedType === TASK_TYPE_KEYS.UNBINDING ? 'block' : 'none';
+    unbindingEntry.style.display = 'none';
   }
+
+  if (guardEntry) {
+    guardEntry.style.display = 'block';
+  }
+  if (actionEntry) {
+    actionEntry.style.display = selectedType === TASK_TYPE_KEYS.ENVIRONMENTAL ? 'block' : 'none';
+  }
+  if (timerEntry) {
+    timerEntry.style.display =
+      selectedType === TASK_TYPE_KEYS.ENVIRONMENTAL ||
+      selectedType === TASK_TYPE_KEYS.MOVEMENT ||
+      selectedType === TASK_TYPE_KEYS.BINDING ||
+      selectedType === TASK_TYPE_KEYS.UNBINDING
+        ? 'block'
+        : 'none';
+  }
+
   const assignmentsEntry = section.querySelector('.space-assignments-entry');
   if (assignmentsEntry) {
     assignmentsEntry.style.display = selectedType === TASK_TYPE_KEYS.ENVIRONMENTAL ? 'block' : 'none';
@@ -1249,7 +1627,19 @@ SpacePropertiesProvider.prototype.updateFieldVisibility = function(section, sele
 SpacePropertiesProvider.prototype.getStatusText = function(element, currentType) {
   const translate = this._translate;
 
+  if (element.type === 'bpmn:SendTask') {
+    const guard = this._extensionService.getGuard(element);
+    if (guard && guard.trim()) {
+      return `<strong>${translate('Status')}:</strong> ${translate('Guard configured on send task')}`;
+    }
+    return `<strong>${translate('Status')}:</strong> ${translate('No configuration')} <br><em>${translate('Configure a guard for this send task')}</em>`;
+  }
+
   if (!currentType) {
+    const guard = this._extensionService.getGuard(element);
+    if (guard && guard.trim()) {
+      return `<strong>${translate('Status')}:</strong> ${translate('Guard configured on base BPMN task')}`;
+    }
     return `<strong>${translate('Status')}:</strong> ${translate('No configuration')} <br><em>${translate('Select a type to configure this task')}</em>`;
   }
 
@@ -1276,14 +1666,21 @@ SpacePropertiesProvider.prototype.updateSectionIndicators = function(section, el
   const statusDisplay = section.querySelector('.space-status-display');
 
   const currentType = this._extensionService.getCurrentType(element);
-  const hasData = !!currentType;
+  const currentGuard = this._extensionService.getGuard(element) || '';
+  const hasData = element.type === 'bpmn:SendTask'
+    ? !!currentGuard.trim()
+    : (!!currentType || !!currentGuard.trim());
 
   const assignmentCount = this._assignmentService.getAssignmentCount(element);
   const titleDiv = header.querySelector('.bio-properties-panel-group-header-title');
 
   if (titleDiv) {
+    if (element.type === 'bpmn:SendTask') {
+      titleDiv.childNodes[0].textContent = 'Environmental Properties';
+    }
+
     let badge = titleDiv.querySelector('.assignment-count-badge');
-    if (assignmentCount > 0) {
+    if (element.type !== 'bpmn:SendTask' && assignmentCount > 0) {
       if (!badge) {
         badge = document.createElement('span');
         badge.className = 'assignment-count-badge';
@@ -1334,42 +1731,256 @@ SpacePropertiesProvider.prototype.refreshSpaceSection = function(element) {
   const existingSection = document.querySelector('.space-properties-section');
   if (existingSection && element) {
 
+    if (element.type === 'bpmn:SequenceFlow') {
+      const guardInput = existingSection.querySelector('.space-sequenceflow-guard-input');
+      if (guardInput) {
+        guardInput.value = this._extensionService.getGuard(element) || '';
+      }
+      return;
+    }
+
+    if (element.type === 'bpmn:SendTask') {
+      const guardInput = existingSection.querySelector('.space-guard-input');
+      if (guardInput) {
+        guardInput.value = this._extensionService.getGuard(element) || '';
+      }
+
+      this.updateFieldVisibility(existingSection, undefined);
+      this.updateSectionIndicators(existingSection, element);
+      return;
+    }
+
     // Update form fields with current XML values
     const currentType = this._extensionService.getCurrentType(element);
     const currentDestination = this._extensionService.getDestination(element);
     const currentBinding = this._extensionService.getBinding(element);
+    const currentGuard = this._extensionService.getGuard(element);
+    const currentAction = this._extensionService.getAction(element);
+    const currentTimer = this._extensionService.getTimer(element);
 
     const typeSelect = existingSection.querySelector('.space-type-select');
     const destinationInput = existingSection.querySelector('.space-destination-input');
     const bindingInput = existingSection.querySelector('.space-binding-input');
+    const guardInput = existingSection.querySelector('.space-guard-input');
+    const actionInput = existingSection.querySelector('.space-action-input');
+    const timerInput = existingSection.querySelector('.space-timer-input');
 
     if (typeSelect) typeSelect.value = currentType || '';
     if (destinationInput) destinationInput.value = currentDestination || '';
     if (bindingInput) bindingInput.value = currentBinding || '';
+    if (guardInput) guardInput.value = currentGuard || '';
+    if (actionInput) actionInput.value = currentAction || '';
+    if (timerInput) timerInput.value = currentTimer || '';
 
     
-    if (currentType === TASK_TYPE_KEYS.ENVIRONMENTAL) {
-      const assignmentsEntry = existingSection.querySelector('.space-assignments-entry');
-      if (!assignmentsEntry) {
-        const groupEntries = existingSection.querySelector('.bio-properties-panel-group-entries');
-        if (groupEntries) {
-          const assignmentsHTML = this.renderTaskAssignments(element);
-          groupEntries.insertAdjacentHTML('beforeend', assignmentsHTML);
-          this.attachAssignmentListeners(existingSection, element);
-        }
-      }
-    }
+    // if (currentType === TASK_TYPE_KEYS.ENVIRONMENTAL) {
+    //   const assignmentsEntry = existingSection.querySelector('.space-assignments-entry');
+    //   if (!assignmentsEntry) {
+    //     const groupEntries = existingSection.querySelector('.bio-properties-panel-group-entries');
+    //     if (groupEntries) {
+    //       const assignmentsHTML = this.renderTaskAssignments(element);
+    //       groupEntries.insertAdjacentHTML('beforeend', assignmentsHTML);
+    //       this.attachAssignmentListeners(existingSection, element);
+    //     }
+    //   }
+    // }
 
-    // Update visibility and indicators
+    // Keep UI deterministic when switching type/task: always recompute visibility and values.
     this.updateFieldVisibility(existingSection, currentType);
     this.updateSectionIndicators(existingSection, element);
 
     this.updateDestinationAttributes(existingSection, element);
 
-    if (currentType) {
-      this.refreshAssignmentsSection(existingSection, element);
-    }
+    // if (currentType) {
+    //   this.refreshAssignmentsSection(existingSection, element);
+    // }
   }
+};
+
+/**
+ * Create Space Properties section for sequence flows (guard support)
+ */
+SpacePropertiesProvider.prototype.createSequenceFlowSpaceSection = function(element) {
+  const propertiesPanel = document.querySelector('.bio-properties-panel-scroll-container');
+  if (!propertiesPanel) {
+    return;
+  }
+
+  // Remove existing space sections
+  const existingSection = propertiesPanel.querySelector('.space-properties-section');
+  if (existingSection) {
+    existingSection.remove();
+  }
+
+  const section = document.createElement('div');
+  section.className = 'bio-properties-panel-group space-properties-section';
+  section.setAttribute('data-group-id', 'group-space-flow-properties');
+
+  const currentGuard = this._extensionService.getGuard(element);
+  const hasGuard = !!currentGuard;
+  const translate = this._translate;
+
+  section.innerHTML = `
+    <div class="bio-properties-panel-group-header ${hasGuard ? 'open' : ''} ${hasGuard ? '' : 'empty'}">
+      <div title="Sequence Flow Guard" 
+           data-title="Sequence Flow Guard" 
+           class="bio-properties-panel-group-header-title">
+          Environmental Properties
+          ${hasGuard ? '<span class="assignment-count-badge">✓</span>' : ''}
+      </div>
+      <div class="bio-properties-panel-group-header-buttons">
+        ${hasGuard ? '<div title="Guard is set" class="bio-properties-panel-dot"></div>' : ''}
+        <button type="button" 
+                title="Toggle section" 
+                class="bio-properties-panel-group-header-button bio-properties-panel-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="${hasGuard ? 'bio-properties-panel-arrow-down' : 'bio-properties-panel-arrow-right'}">
+            <path fill-rule="evenodd" d="m11.657 8-4.95 4.95a1 1 0 0 1-1.414-1.414L8.828 8 5.293 4.464A1 1 0 1 1 6.707 3.05L11.657 8Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="bio-properties-panel-group-entries ${hasGuard ? 'open' : ''}" style="${hasGuard ? '' : 'display: none;'}">
+      <!-- Guard Entry -->
+      <div data-entry-id="space-seq-guard" class="bio-properties-panel-entry space-seq-guard-entry">
+        <div class="bio-properties-panel-textfield">
+          <label for="space-seq-guard-input" class="bio-properties-panel-label">Guard Condition</label>
+          <input id="space-seq-guard-input" 
+                 type="text" 
+                 name="spaceSeqGuard" 
+                 spellcheck="false" 
+                 autocomplete="off" 
+                 class="bio-properties-panel-input space-seq-guard-input"
+                 placeholder="${translate('Enter guard expression')}"
+                 value="${currentGuard || ''}" />
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Insert after General section
+  const generalSection = propertiesPanel.querySelector('[data-group-id*="general"]');
+  if (generalSection && generalSection.nextSibling) {
+    propertiesPanel.insertBefore(section, generalSection.nextSibling);
+  } else {
+    propertiesPanel.insertBefore(section, propertiesPanel.firstChild);
+  }
+
+  this.attachSequenceFlowEventListeners(section, element);
+};
+
+/**
+ * Attach event listeners specifically for sequence flow guard
+ */
+SpacePropertiesProvider.prototype.attachSequenceFlowEventListeners = function(section, element) {
+  // Toggle section expand/collapse
+  const toggleButton = section.querySelector('.bio-properties-panel-group-header-button');
+  const header = section.querySelector('.bio-properties-panel-group-header');
+  const entries = section.querySelector('.bio-properties-panel-group-entries');
+
+  if (toggleButton && header && entries) {
+    toggleButton.addEventListener('click', () => {
+      const isOpen = header.classList.contains('open');
+
+      if (isOpen) {
+        header.classList.remove('open');
+        entries.classList.remove('open');
+        entries.style.display = 'none';
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-down');
+          arrow.classList.add('bio-properties-panel-arrow-right');
+        }
+      } else {
+        header.classList.add('open');
+        entries.classList.add('open');
+        entries.style.display = 'block';
+        const arrow = toggleButton.querySelector('svg');
+        if (arrow) {
+          arrow.classList.remove('bio-properties-panel-arrow-right');
+          arrow.classList.add('bio-properties-panel-arrow-down');
+        }
+      }
+    });
+  }
+
+  // Guard input listener
+  const guardInput = section.querySelector('.space-seq-guard-input');
+  if (guardInput) {
+    ['input', 'blur', 'change'].forEach(eventType => {
+      guardInput.addEventListener(eventType, (e) => {
+        try {
+          const value = e.target.value.trim();
+          
+          if (value) {
+            // Set guard extension
+            this._extensionService.setExtension(element, EXTENSION_TYPES.GUARD, value);
+            // Add condition expression to sequence flow
+            this.getOrCreateConditionExpression(element);
+          } else {
+            // Remove guard extension
+            this._extensionService.removeExtensions(
+              element,
+              ext => ext.$type === EXTENSION_TYPES.GUARD
+            );
+            // Remove condition expression
+            this.removeConditionExpression(element);
+          }
+
+          // Update UI state
+          header.classList.toggle('empty', !value);
+          const dot = header.querySelector('.bio-properties-panel-dot');
+          if (!value && dot) {
+            dot.remove();
+          } else if (value && !dot) {
+            const newDot = document.createElement('div');
+            newDot.className = 'bio-properties-panel-dot';
+            newDot.title = 'Guard is set';
+            header.querySelector('.bio-properties-panel-group-header-buttons').insertBefore(newDot, toggleButton);
+          }
+
+        } catch (error) {
+          console.error('Error saving guard:', error);
+        }
+      });
+    });
+  }
+};
+
+/**
+ * Helper: Create or get conditionExpression on sequence flow
+ * Sets it to ${true == true} so Camunda always follows when guard is satisfied
+ */
+SpacePropertiesProvider.prototype.getOrCreateConditionExpression = function(element) {
+  if (!element.businessObject) {
+    return;
+  }
+
+  const bo = element.businessObject;
+  const moddle = bo.$model;
+
+  if (!bo.conditionExpression) {
+    // Create new condition expression
+    const conditionExpression = moddle.create('bpmn:FormalExpression', {
+      body: '${true == true}'
+    });
+    bo.conditionExpression = conditionExpression;
+  } else {
+    // Update existing to true
+    bo.conditionExpression.body = '${true == true}';
+  }
+};
+
+/**
+ * Helper: Remove conditionExpression from sequence flow
+ */
+SpacePropertiesProvider.prototype.removeConditionExpression = function(element) {
+  if (!element.businessObject) {
+    return;
+  }
+
+  const bo = element.businessObject;
+  bo.conditionExpression = undefined;
 };
 
 export default {

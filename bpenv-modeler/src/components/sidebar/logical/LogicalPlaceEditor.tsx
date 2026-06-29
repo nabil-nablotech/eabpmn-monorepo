@@ -116,7 +116,7 @@ const LogicalPlaceEditor = ({ initialPlace, onSave, showAsModal = false, onClose
             </button>
           </div>
         ))}
-        <button className="btn btn-sm btn-outline-light w-100 mt-2" onClick={addConditionField}>
+        <button className="btn btn-sm btn-outline-dark w-100 mt-2" onClick={addConditionField}>
           Add Condition
         </button>
       </div>
