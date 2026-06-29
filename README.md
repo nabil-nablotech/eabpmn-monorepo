@@ -17,7 +17,7 @@
 ## 📁 Project Structure
 
 ```
-BEE/
+eabpmn-monorepo/
 ├── camunda-modeler/          # Extended Camunda Modeler
 │   ├── resources/
 │   │   └── plugins/
@@ -25,8 +25,7 @@ BEE/
 │   ├── app/                  # Electron app
 │   └── client/              # React client
 ├── bpenv-modeler/           # BPENV Modeler library (React components)
-├── camunda-bpmn-engine/     # Java BPMN engine
-└── docker-compose.yml       # Keycloak & PostgreSQL setup
+└──camunda-bpmn-engine/     # Java BPMN engine
 
 ```
 
